@@ -96,8 +96,15 @@
                 </div>
             </div>
 
-            <div class="mt-5 text-center">
-                <a href="{{ route('user.dashboard') }}" class="text-xs font-semibold text-sky-600 hover:underline">
+            <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-500">
+                    Belum memiliki akun? 
+                    <a href="{{ route('register') }}" class="font-bold text-sky-600 hover:underline">Daftar sekarang</a>
+                </p>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a href="{{ route('user.dashboard') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
                     &larr; Kembali ke Dashboard Publik
                 </a>
             </div>

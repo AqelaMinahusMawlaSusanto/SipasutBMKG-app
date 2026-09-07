@@ -5,7 +5,7 @@ from typing import List
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from parser import parse_file
+from tidal_parser import parse_file
 
 app = FastAPI(
     title="SIPASUT - Tidal Data Processing Microservice",

@@ -21,6 +21,47 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+    public function showRegister()
+    {
+        if (Auth::check()) {
+            return Auth::user()->isAdmin() 
+                ? redirect()->route('admin.data') 
+                : redirect()->route('user.dashboard');
+        }
+
+        return view('auth.register');
+    }
+
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'user',
+        ]);
+
+        // Assign Spatie Role
+        $user->assignRole('user');
+
+        Auth::login($user);
+
+        ActivityLog::record(
+            'register',
+            "User baru {$user->name} ({$user->email}) berhasil mendaftar.",
+            $user
+        );
+
+        return redirect()->route('user.dashboard')
+            ->with('success', "Selamat datang di SIPASUT BMKG, {$user->name}! Akun Anda berhasil dibuat.");
+    }
+
     public function login(Request $request)
     {
         $credentials = $request->validate([

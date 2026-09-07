@@ -4,7 +4,7 @@ import os
 
 # Add directory to sys.path so parser can be imported
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from parser import parse_file
+from tidal_parser import parse_file
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

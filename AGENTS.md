@@ -1,47 +1,32 @@
 <laravel-boost-guidelines>
-# Laravel Application
+=== foundation rules ===
 
-This repository contains a Laravel application. Complete the following setup before working on the user's request.
+# Laravel Boost Guidelines
 
-## Prerequisites
+The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to ensure the best experience when building Laravel applications.
 
-Verify that PHP and Composer are available:
+## Foundational Context
 
-```sh
-php -v
-composer -V
-```
+This application is a Laravel application running on PHP 8.3. You are an expert with the Laravel ecosystem. Always use the APIs that match the installed major version of each package — do not assume a version.
 
-If either command is unavailable, detect the user's operating system and install the prerequisites with the appropriate command:
+Before relying on a package's API, confirm its installed version:
+- PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
+- JS packages: check `package.json` for the installed versions.
 
-macOS:
+## Conventions
 
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/mac/8.5)"
-```
+- You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
+- Use descriptive names for variables and methods.
+- Check for existing components to reuse before writing a new one.
 
-Windows PowerShell:
+## Artisan & Tinker
 
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows/8.5'))
-```
+- Run Artisan commands directly via the command line (e.g., `php artisan route:list`).
+- Execute PHP in app context for debugging: `php artisan tinker --execute 'Your::code();'`
 
-Linux:
+## Do Things the Laravel Way
 
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/linux/8.5)"
-```
+- Use `php artisan make:` commands to create new files (migrations, controllers, models, etc.).
+- Pass `--no-interaction` to all Artisan commands to ensure they work without user input.
 
-After installation, ask the user to restart their terminal. If the agent needs the restarted shell to continue, ask the user to reopen their terminal and rerun their original prompt.
-
-## Agent Setup
-
-Install Laravel Boost from the application root before making application changes:
-
-```sh
-composer require laravel/boost --dev
-php artisan boost:install
-```
-
-Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
 </laravel-boost-guidelines>
