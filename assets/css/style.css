@@ -1,0 +1,318 @@
+/* ============================================
+   BMKG - Monitoring Pasang Surut
+   Halaman Sign In & Sign Up
+   ============================================ */
+
+:root {
+  --navy:        #142C6B;
+  --navy-dark:   #0E2154;
+  --biru-langit: #E8F3FC;
+  --biru-muda:   #BBDCF5;
+  --biru-tua:    #2C87DE;
+  --teks:        #10233F;
+  --teks-lembut: #6B7A90;
+  --garis:       #D6DFEA;
+  --putih:       #FFFFFF;
+  --merah:       #C0392B;
+  --hijau:       #1E8E4E;
+  --radius:      10px;
+  --shadow:      0 18px 45px rgba(18, 46, 97, .14);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  color: var(--teks);
+  background: var(--biru-langit);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Panggung / background ---------- */
+.stage {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, #F3F9FE 0%, #DCEDFB 45%, #BEDDF6 100%);
+}
+
+/* gumpalan biru di pojok, meniru gradient mesh pada desain */
+.stage::before,
+.stage::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+}
+.stage::before {
+  width: 620px; height: 620px;
+  left: -180px; bottom: -260px;
+  background: radial-gradient(circle, rgba(31,124,214,.85) 0%, rgba(31,124,214,0) 70%);
+}
+.stage::after {
+  width: 760px; height: 760px;
+  right: -220px; bottom: -340px;
+  background: radial-gradient(circle, rgba(46,139,224,.7) 0%, rgba(46,139,224,0) 70%);
+}
+
+/* ---------- Logo pojok kiri atas ---------- */
+.brand-mark {
+  position: absolute;
+  top: 38px; left: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 3;
+}
+.brand-mark img { width: 48px; height: 48px; object-fit: contain; }
+.brand-mark .brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--navy);
+  line-height: 1.05;
+}
+.brand-mark .brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2D4B7C;
+}
+
+/* ---------- Grid isi halaman ---------- */
+.stage-grid {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 520px;
+  align-items: end;
+  gap: 40px;
+  padding: 120px 60px 70px;
+}
+
+/* ---------- Teks kiri bawah ---------- */
+.headline { max-width: 460px; padding-bottom: 60px; }
+.headline h1 {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #0C1E3C;
+}
+.headline p {
+  margin-top: 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #2E4362;
+  max-width: 42ch;
+}
+
+/* ---------- Kartu form ---------- */
+.card-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 430px;
+  background: var(--putih);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 38px 44px 34px;
+  text-align: center;
+}
+
+.auth-card .card-logo { width: 62px; margin: 0 auto 14px; display: block; }
+
+.auth-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: .2px;
+}
+.auth-card .card-sub {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--teks-lembut);
+}
+
+/* ---------- Field ---------- */
+.form { margin-top: 24px; text-align: left; }
+
+.field { margin-bottom: 15px; }
+
+.field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #22344F;
+  margin-bottom: 7px;
+}
+
+.control { position: relative; }
+
+.control input {
+  width: 100%;
+  height: 42px;
+  padding: 0 42px 0 14px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--teks);
+  background: #FCFDFF;
+  border: 1px solid var(--garis);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.control input::placeholder { color: #9AA8BC; }
+.control input:focus {
+  border-color: var(--biru-tua);
+  box-shadow: 0 0 0 3px rgba(44,135,222,.16);
+}
+
+.control .icon {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  color: #7C8BA1;
+  pointer-events: none;
+}
+.control button.icon {
+  pointer-events: auto;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: #7C8BA1;
+}
+.control button.icon:focus-visible { outline: 2px solid var(--biru-tua); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- Ingat saya ---------- */
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #22344F;
+  cursor: pointer;
+  user-select: none;
+}
+.remember input {
+  width: 15px; height: 15px;
+  accent-color: var(--navy);
+  cursor: pointer;
+}
+
+/* ---------- Tombol ---------- */
+.btn {
+  display: block;
+  width: 100%;
+  height: 44px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--navy);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.btn:hover  { background: var(--navy-dark); }
+.btn:focus-visible { outline: 3px solid rgba(44,135,222,.5); outline-offset: 2px; }
+
+/* ---------- Footer kartu ---------- */
+.card-foot {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--teks-lembut);
+}
+.card-foot a { color: var(--biru-tua); font-weight: 600; text-decoration: none; }
+.card-foot a:hover { text-decoration: underline; }
+
+/* ---------- Notifikasi ---------- */
+.alert {
+  margin-bottom: 16px;
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+}
+.alert-error   { background: #FDECEA; color: var(--merah);  border: 1px solid #F5C6C1; }
+.alert-success { background: #E9F7EF; color: var(--hijau); border: 1px solid #BFE6CE; }
+
+/* ---------- Kartu sukses daftar ---------- */
+.success-state { padding: 46px 44px 40px; }
+.success-state .tick {
+  width: 58px; height: 58px;
+  margin: 0 auto 18px;
+  color: var(--navy);
+}
+.success-state h2 { font-size: 19px; }
+.success-state p {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--teks-lembut);
+  line-height: 1.6;
+}
+.success-state .btn {
+  width: auto;
+  min-width: 150px;
+  height: 38px;
+  margin: 22px auto 0;
+  padding: 0 26px;
+  font-size: 13px;
+}
+
+/* ---------- Dashboard sederhana ---------- */
+.panel {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 140px 24px 80px;
+  text-align: center;
+}
+.panel h1 { font-size: 28px; color: var(--navy); }
+.panel p  { margin-top: 12px; color: #2E4362; font-size: 14px; }
+.panel .btn { width: auto; margin: 26px auto 0; padding: 0 30px; }
+
+/* ---------- Responsif ---------- */
+@media (max-width: 1024px) {
+  .stage-grid {
+    grid-template-columns: 1fr;
+    align-items: center;
+    justify-items: center;
+    padding: 110px 28px 60px;
+  }
+  .headline { order: 2; padding-bottom: 0; text-align: center; }
+  .headline p { margin-left: auto; margin-right: auto; }
+  .card-slot { order: 1; width: 100%; }
+}
+
+@media (max-width: 520px) {
+  .brand-mark { top: 24px; left: 24px; }
+  .brand-mark img { width: 40px; height: 40px; }
+  .brand-mark .brand-name { font-size: 18px; }
+  .stage-grid { padding: 100px 18px 48px; }
+  .auth-card { padding: 30px 24px 26px; }
+  .headline h1 { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
