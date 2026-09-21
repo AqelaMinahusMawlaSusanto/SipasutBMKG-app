@@ -14,7 +14,6 @@ $nama_admin = $_SESSION['admin_nama'] ?? 'Admin';
 
 // =========================================================
 // AMBIL DATA STATISTIK
-// Sesuaikan nama tabel/kolom kalau struktur DB kamu beda.
 // Dibungkus try-catch supaya tidak error kalau tabel belum ada.
 // =========================================================
 function getCount(PDO $pdo, string $sql) {
