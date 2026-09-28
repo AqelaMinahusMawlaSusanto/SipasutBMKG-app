@@ -13,23 +13,27 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return Auth::user()->isAdmin() 
-                ? redirect()->route('admin.data') 
-                : redirect()->route('user.dashboard');
+            /** @var User $user */
+            $user = Auth::user();
+            return $user->hasRole('admin') || $user->isAdmin()
+                ? redirect()->route('admin.dashboard')
+                : redirect()->route('dashboard.index');
         }
 
-        return view('auth.login');
+        return view('admin.login');
     }
 
     public function showRegister()
     {
         if (Auth::check()) {
-            return Auth::user()->isAdmin() 
-                ? redirect()->route('admin.data') 
-                : redirect()->route('user.dashboard');
+            /** @var User $user */
+            $user = Auth::user();
+            return $user->hasRole('admin') || $user->isAdmin()
+                ? redirect()->route('admin.dashboard')
+                : redirect()->route('dashboard.index');
         }
 
-        return view('auth.register');
+        return view('admin.register');
     }
 
     public function register(Request $request)
@@ -44,22 +48,22 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'user',
+            'role' => 'admin',
         ]);
 
         // Assign Spatie Role
-        $user->assignRole('user');
+        $user->assignRole('admin');
 
         Auth::login($user);
 
         ActivityLog::record(
             'register',
-            "User baru {$user->name} ({$user->email}) berhasil mendaftar.",
+            "Admin baru {$user->name} ({$user->email}) berhasil mendaftar.",
             $user
         );
 
-        return redirect()->route('user.dashboard')
-            ->with('success', "Selamat datang di SIPASUT BMKG, {$user->name}! Akun Anda berhasil dibuat.");
+        return redirect()->route('admin.dashboard')
+            ->with('success', "Selamat datang di SIPASUT BMKG, {$user->name}! Akun Admin berhasil dibuat.");
     }
 
     public function login(Request $request)
@@ -83,12 +87,12 @@ class AuthController extends Controller
                 $user
             );
 
-            if ($user->isAdmin()) {
-                return redirect()->intended(route('admin.data'))
+            if ($user->hasRole('admin') || $user->isAdmin()) {
+                return redirect()->intended(route('admin.dashboard'))
                     ->with('success', "Selamat datang kembali, {$user->name}!");
             }
 
-            return redirect()->intended(route('user.dashboard'))
+            return redirect()->intended(route('dashboard.index'))
                 ->with('success', "Selamat datang di SIPASUT, {$user->name}!");
         }
 

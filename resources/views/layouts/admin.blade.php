@@ -37,6 +37,13 @@
         <div class="flex-1 px-4 py-6 space-y-1 text-sm font-medium">
             <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
+            <!-- 0. Dashboard -->
+            <a href="{{ route('admin.dashboard') }}" 
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.dashboard') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>Dashboard</span>
+            </a>
+
             <!-- 1. Kelola Data -->
             <a href="{{ route('admin.data') }}" 
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.data*') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
@@ -73,7 +80,7 @@
             </a>
 
             <div class="pt-6 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Navigasi Luar</div>
-            <a href="{{ route('user.dashboard') }}" target="_blank"
+            <a href="{{ route('dashboard.index') }}" target="_blank"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 <span>Lihat Dashboard User</span>
@@ -106,6 +113,7 @@
         <div class="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
             <span class="font-bold">SIPASUT ADMIN</span>
             <div class="flex gap-2 text-xs">
+                <a href="{{ route('admin.dashboard') }}" class="p-1 text-slate-300">Dashboard</a>
                 <a href="{{ route('admin.data') }}" class="p-1 text-slate-300">Data</a>
                 <a href="{{ route('admin.lokasi') }}" class="p-1 text-slate-300">Lokasi</a>
                 <a href="{{ route('admin.notif') }}" class="p-1 text-slate-300">Notif</a>

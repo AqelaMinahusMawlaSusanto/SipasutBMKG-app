@@ -19,6 +19,18 @@ use Illuminate\Support\Facades\Storage;
 class AdminController extends Controller
 {
     // ==========================================
+    // 0. DASHBOARD ADMIN
+    // ==========================================
+    public function dashboard()
+    {
+        $totalStasiun = Location::count();
+        $totalData = TidalData::count();
+        $totalPeringatan = Notification::where('is_active', true)->count();
+
+        return view('admin.dashboard', compact('totalStasiun', 'totalData', 'totalPeringatan'));
+    }
+
+    // ==========================================
     // 1. KELOLA DATA (Upload & Riwayat File)
     // ==========================================
     public function kelolaData(Request $request)
