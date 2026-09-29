@@ -39,10 +39,13 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.index');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
-    // 1. Kelola Data (Upload & Riwayat)
+    // 1. Kelola Data (Prediksi & Upload)
     Route::get('/data', [AdminController::class, 'kelolaData'])->name('admin.data');
+    Route::post('/data/prediksi', [AdminController::class, 'storePrediksi'])->name('admin.data.store');
+    Route::put('/data/prediksi/{id}', [AdminController::class, 'updatePrediksi'])->name('admin.data.update');
+    Route::delete('/data/prediksi/{id}', [AdminController::class, 'deletePrediksi'])->name('admin.data.destroy');
     Route::post('/data/upload', [AdminController::class, 'storeDataUpload'])->name('admin.data.upload');
-    Route::delete('/data/{id}', [AdminController::class, 'deleteDataUpload'])->name('admin.data.delete');
+    Route::delete('/data/upload/{id}', [AdminController::class, 'deleteDataUpload'])->name('admin.data.delete');
 
     // 2. Kelola Lokasi (CRUD 5 Titik Pantai)
     Route::get('/lokasi', [AdminController::class, 'kelolaLokasi'])->name('admin.lokasi');
