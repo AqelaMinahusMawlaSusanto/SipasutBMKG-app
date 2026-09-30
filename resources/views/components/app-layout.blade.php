@@ -36,12 +36,14 @@
         <li><a href="{{ route('dashboard.index') }}" target="_blank" style="color: #0284c7;">Web Publik ↗</a></li>
     </ul>
 
-    <div class="profile">
-        <div class="avatar">👤</div>
-        <div class="info">
-            <p class="profile-name">{{ Auth::user()->name ?? 'Admin BMKG' }}</p>
-            <p class="profile-role">{{ (Auth::check() && Auth::user()->hasRole('admin')) ? 'Admin BMKG' : 'Petugas' }}</p>
-        </div>
+        <div class="profile">
+        <a href="{{ route('admin.profil') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+            <div class="avatar">👤</div>
+            <div class="info">
+                <p class="profile-name">{{ Auth::user()->name ?? 'Admin BMKG' }}</p>
+                <p class="profile-role">{{ (Auth::check() && Auth::user()->hasRole('admin')) ? 'Admin BMKG' : 'Petugas' }}</p>
+            </div>
+        </a>
         <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
             @csrf
             <button type="submit" class="logout-link">Keluar</button>

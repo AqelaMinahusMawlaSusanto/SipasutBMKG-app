@@ -458,7 +458,9 @@ class AdminController extends Controller
 
         $admin->name = $request->name;
         $admin->email = $request->email;
-        $admin->phone = $request->phone;
+        if ($request->has('phone')) {
+            $admin->phone = $request->phone;
+        }
 
         if ($request->filled('new_password')) {
             if (!Hash::check($request->current_password, $admin->password)) {
