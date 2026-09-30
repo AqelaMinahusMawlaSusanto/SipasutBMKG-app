@@ -1,486 +1,333 @@
 <x-app-layout>
-<div class="content">
+    <div class="p-8 space-y-6 bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;" x-data="{ openUploadModal: false }">
 
-    {{-- Flash Alert --}}
-    @if(session('success'))
-        <div style="background:#dcfce7;border:1px solid #bbf7d0;color:#15803d;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;font-weight:600;">
-            ✅ {{ session('success') }}
-        </div>
-    @endif
-    @if(session('warning'))
-        <div style="background:#fef3c7;border:1px solid #fde68a;color:#b45309;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;font-weight:600;">
-            ⚠️ {{ session('warning') }}
-        </div>
-    @endif
-    @if($errors->any())
-        <div style="background:#fee2e2;border:1px solid #fecaca;color:#b91c1c;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;">
-            @foreach($errors->all() as $error)
-                <div>❌ {{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
-
-    {{-- Header Row --}}
-    <div class="page-header-row">
-        <div>
-            <h1>Kelola Prediksi Pasang Surut</h1>
-            <p>Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
-        </div>
-        <button onclick="openModal('modalTambah')" class="btn-primary-add">
-            ＋ Tambah Prediksi
-        </button>
-    </div>
-
-    {{-- 4 Stat Cards --}}
-    <div class="stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card">
-            <div class="icon blue">📊</div>
+        <!-- Title & Tombol Tambah Prediksi -->
+        <div class="flex items-center justify-between">
             <div>
-                <div class="label">Total Data</div>
-                <div class="value">{{ $totalData }}</div>
-                <div class="sub">● Data Pasang Surut</div>
+                <!-- Font ditipiskan sedikit saja (font-weight: 700) -->
+                <h1 class="text-3xl font-bold text-[#0F172A] tracking-tight" style="color: #0F172A; font-weight: 700;">Kelola Prediksi Pasang Surut</h1>
+                <p class="text-sm font-medium text-slate-500 mt-1">Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
             </div>
-        </div>
-        <div class="stat-card">
-            <div class="icon indigo">📍</div>
-            <div>
-                <div class="label">Lokasi Monitoring</div>
-                <div class="value">{{ $totalLokasi }}</div>
-                <div class="sub muted">Lokasi Aktif</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="icon sky">📋</div>
-            <div>
-                <div class="label">Data Hari Ini</div>
-                <div class="value">{{ $dataHariIni }}</div>
-                <div class="sub muted">Data Terbaru</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="icon" style="background:#fff7ed;">🕐</div>
-            <div>
-                <div class="label">Update Terakhir</div>
-                <div class="value" style="font-size:18px;">{{ $updateTerakhir }}</div>
-                <div class="sub muted">Data Terbaru</div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Filter Card --}}
-    <form method="GET" action="{{ route('admin.data') }}" id="filterForm">
-        <div class="filter-card">
-            <div class="filter-item">
-                <label>Cari Lokasi</label>
-                <select name="location_id" class="filter-input">
-                    <option value="">Pilih Lokasi</option>
-                    @foreach($locations as $loc)
-                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>
-                            {{ $loc->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="filter-item">
-                <label>Tanggal</label>
-                <input type="date" name="date" class="filter-input"
-                       value="{{ request('date') }}"
-                       placeholder="{{ now()->format('d/m/Y') }}">
-            </div>
-            <div class="filter-item">
-                <label>Status Kondisi</label>
-                <select name="status" class="filter-input">
-                    <option value="">Semua Kondisi</option>
-                    <option value="Aman" {{ request('status') === 'Aman' ? 'selected' : '' }}>Aman</option>
-                    <option value="Waspada" {{ request('status') === 'Waspada' ? 'selected' : '' }}>Waspada</option>
-                    <option value="Bahaya" {{ request('status') === 'Bahaya' ? 'selected' : '' }}>Bahaya</option>
-                </select>
-            </div>
-            <div class="filter-item">
-                <label>Urutkan</label>
-                <select name="sort" class="filter-input">
-                    <option value="terbaru" {{ request('sort', 'terbaru') === 'terbaru' ? 'selected' : '' }}>Terbaru</option>
-                    <option value="terlama" {{ request('sort') === 'terlama' ? 'selected' : '' }}>Terlama</option>
-                    <option value="lokasi" {{ request('sort') === 'lokasi' ? 'selected' : '' }}>Lokasi A-Z</option>
-                </select>
-            </div>
-            <div class="filter-actions">
-                <button type="submit" class="btn-search">
-                    🔍 Cari
-                </button>
-                <a href="{{ route('admin.data') }}" class="btn-reset">
-                    ↺ Reset
-                </a>
-            </div>
-        </div>
-    </form>
-
-    {{-- Tabel Data Prediksi --}}
-    <div class="table-card">
-        <div style="padding:18px 20px 10px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-                <span style="font-size:15px;font-weight:700;color:#1e3a8a;">Daftar Prediksi Pasang Surut</span>
-                <span style="margin-left:10px;font-size:12px;color:#64748b;">({{ $predictions->total() }} data ditemukan)</span>
-            </div>
-        </div>
-        <div style="overflow-x:auto;">
-            <table class="sipasut-table">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Lokasi</th>
-                        <th>Tanggal</th>
-                        <th>Jam Pasang</th>
-                        <th>Tinggi Pasang</th>
-                        <th>Jam Surut</th>
-                        <th>Tinggi Surut</th>
-                        <th>Status</th>
-                        <th>Update</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($predictions as $i => $p)
-                        <tr>
-                            <td>{{ ($predictions->currentPage() - 1) * $predictions->perPage() + $i + 1 }}</td>
-                            <td style="font-weight:600;color:#0369a1;">
-                                {{ $p->location->name ?? '-' }}
-                            </td>
-                            <td>{{ $p->record_date->format('d M Y') }}</td>
-                            <td>{{ $p->high_tide_time }}</td>
-                            <td>
-                                <span style="font-weight:700;color:#15803d;">{{ number_format($p->high_tide_level, 2) }} m</span>
-                            </td>
-                            <td>{{ $p->low_tide_time }}</td>
-                            <td>
-                                <span style="font-weight:700;color:#b91c1c;">{{ number_format($p->low_tide_level, 2) }} m</span>
-                            </td>
-                            <td>
-                                @php $st = strtolower($p->status); @endphp
-                                <span class="badge-status {{ $st }}">{{ $p->status }}</span>
-                            </td>
-                            <td style="color:#64748b;font-size:11.5px;">
-                                {{ $p->updated_at->format('H.i \W\I\B') }}
-                            </td>
-                            <td>
-                                <div class="action-btns">
-                                    {{-- Detail --}}
-                                    <button type="button" class="action-btn view"
-                                            title="Detail"
-                                            onclick="openDetail({{ json_encode([
-                                                'lokasi' => $p->location->name ?? '-',
-                                                'tanggal' => $p->record_date->format('d M Y'),
-                                                'high_time' => $p->high_tide_time,
-                                                'high_level' => number_format($p->high_tide_level, 2),
-                                                'low_time' => $p->low_tide_time,
-                                                'low_level' => number_format($p->low_tide_level, 2),
-                                                'status' => $p->status,
-                                                'update' => $p->updated_at->format('d M Y H.i \W\I\B'),
-                                            ]) }})">
-                                        👁️
-                                    </button>
-                                    {{-- Edit --}}
-                                    <button type="button" class="action-btn edit"
-                                            title="Edit"
-                                            onclick="openEdit({{ json_encode([
-                                                'id' => $p->id,
-                                                'location_id' => $p->location_id,
-                                                'record_date' => $p->record_date->format('Y-m-d'),
-                                                'high_tide_time' => $p->high_tide_time,
-                                                'high_tide_level' => $p->high_tide_level,
-                                                'low_tide_time' => $p->low_tide_time,
-                                                'low_tide_level' => $p->low_tide_level,
-                                                'status' => $p->status,
-                                            ]) }})">
-                                        ✏️
-                                    </button>
-                                    {{-- Hapus --}}
-                                    <form action="{{ route('admin.data.destroy', $p->id) }}" method="POST"
-                                          onsubmit="return confirm('Hapus data prediksi {{ $p->location->name ?? '' }} tanggal {{ $p->record_date->format('d/m/Y') }}?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="action-btn delete" title="Hapus">🗑️</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">
-                                Tidak ada data prediksi. Tambah prediksi baru dengan tombol <strong>+ Tambah Prediksi</strong>.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+            
+            <!-- Tombol Tambah Prediksi digeser agak ke kiri sedikit (mr-4) -->
+            <button @click="openUploadModal = true"
+                style="background-color: #1D61E7; color: #FFFFFF; font-weight: 700; padding: 12px 24px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; margin-right: 16px;"
+                class="hover:bg-blue-700 shadow-md transition-all active:scale-95 mr-4">
+                <span style="font-size: 18px; font-weight: 800; line-height: 1;">+</span>
+                <span style="font-size: 14px; font-weight: 700;">Tambah Prediksi</span>
+            </button>
         </div>
 
-        @if($predictions->hasPages())
-            <div style="padding:16px 20px;">
-                {{ $predictions->links() }}
+        <!-- Flash Alert Notification -->
+        @if(session('success'))
+            <div class="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-between shadow-sm">
+                <span>✔ {{ session('success') }}</span>
             </div>
         @endif
-    </div>
 
-    {{-- Riwayat Upload Berkas (Ringkas) --}}
-    @if($uploads->count() > 0)
-    <div class="table-card" style="margin-top:0;">
-        <div style="padding:18px 20px 10px;border-bottom:1px solid #f1f5f9;">
-            <span style="font-size:14px;font-weight:700;color:#475569;">📁 Riwayat Upload Berkas Data (5 Terbaru)</span>
+        @if(session('warning'))
+            <div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-semibold flex items-center justify-between shadow-sm">
+                <span>⚠️ {{ session('warning') }}</span>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs space-y-1 shadow-sm">
+                @foreach($errors->all() as $error)
+                    <div>❌ {{ $error }}</div>
+                @endforeach
+            </div>
+        @endif
+
+        <!-- 4 Stat Cards Mendatar Kesamping -->
+        <div class="grid grid-cols-4 gap-4" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+            
+            <!-- Card 1: Total Data -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+                <div style="width: 56px; height: 56px; background-color: #E0ECFF; color: #1D61E7; border-radius: 9999px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg class="w-7 h-7" style="width: 28px; height: 28px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B;">Total Data</div>
+                    <div style="font-size: 28px; font-weight: 900; color: #0F172A; line-height: 1.2;">{{ $totalData ?? 25 }}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #64748B;">Data Pasang Surut</div>
+                </div>
+            </div>
+
+            <!-- Card 2: Lokasi Monitoring -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+                <div style="width: 56px; height: 56px; background-color: #E0ECFF; color: #1D61E7; border-radius: 9999px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg class="w-7 h-7" style="width: 28px; height: 28px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                </div>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B;">Lokasi Monitoring</div>
+                    <div style="font-size: 28px; font-weight: 900; color: #0F172A; line-height: 1.2;">{{ $totalLokasi ?? 5 }}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #64748B;">Lokasi Aktif</div>
+                </div>
+            </div>
+
+            <!-- Card 3: Data Hari Ini -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+                <div style="width: 56px; height: 56px; background-color: #E0ECFF; color: #1D61E7; border-radius: 9999px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg class="w-7 h-7" style="width: 28px; height: 28px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B;">Data Hari Ini</div>
+                    <div style="font-size: 28px; font-weight: 900; color: #0F172A; line-height: 1.2;">{{ $lokasiTerkonfirmasi ?? 5 }}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #64748B;">Data Terbaru</div>
+                </div>
+            </div>
+
+            <!-- Card 4: Update Terakhir -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+                <div style="width: 56px; height: 56px; background-color: #E0ECFF; color: #1D61E7; border-radius: 9999px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg class="w-7 h-7" style="width: 28px; height: 28px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B;">Update Terakhir</div>
+                    <div style="font-size: 24px; font-weight: 900; color: #0F172A; line-height: 1.2;">{{ $lastUpdated ?? '09.00' }} <span style="font-size: 14px; font-weight: 700;">WIB</span></div>
+                    <div style="font-size: 12px; font-weight: 600; color: #64748B;">Data Terbaru</div>
+                </div>
+            </div>
+
         </div>
-        <div style="overflow-x:auto;">
-            <table class="sipasut-table">
-                <thead>
-                    <tr>
-                        <th>Berkas</th>
-                        <th>Lokasi</th>
-                        <th>Periode</th>
-                        <th>Total Titik</th>
-                        <th>Status</th>
-                        <th>Waktu Unggah</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($uploads as $up)
+
+        <!-- Filter Bar Horizontal -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px;">
+            <form action="{{ route('admin.data') }}" method="GET" style="display: flex; flex-direction: row; align-items: flex-end; gap: 12px; width: 100%;">
+                
+                <!-- Cari Lokasi -->
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 8px;">Cari Lokasi</label>
+                    <select name="station_id" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 500; color: #334155; background-color: #FFFFFF; outline: none;">
+                        <option value="">Pilih Lokasi</option>
+                        @if(isset($stations))
+                            @foreach ($stations as $station)
+                                <option value="{{ $station->id }}">{{ $station->name }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+
+                <!-- Tanggal -->
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 8px;">Tanggal</label>
+                    <input type="date" name="tanggal" value="2026-09-07" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 500; color: #334155; background-color: #FFFFFF; outline: none;">
+                </div>
+
+                <!-- Status Kondisi -->
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 8px;">Status Kondisi</label>
+                    <select name="status" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 500; color: #334155; background-color: #FFFFFF; outline: none;">
+                        <option value="">Semua Kondisi</option>
+                        <option value="Aman">Aman</option>
+                        <option value="Waspada">Waspada</option>
+                        <option value="Bahaya">Bahaya</option>
+                    </select>
+                </div>
+
+                <!-- Urutkan -->
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 8px;">Urutkan</label>
+                    <select name="order" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 500; color: #334155; background-color: #FFFFFF; outline: none;">
+                        <option value="latest">Terbaru</option>
+                        <option value="oldest">Terlama</option>
+                    </select>
+                </div>
+
+                <!-- Tombol Cari -->
+                <div style="width: 120px;">
+                    <button type="submit" style="width: 100%; border: 1px solid #93C5FD; background-color: #FFFFFF; color: #1D61E7; font-weight: 700; font-size: 14px; padding: 12px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        🔍 Cari
+                    </button>
+                </div>
+
+                <!-- Tombol Reset -->
+                <div style="width: 120px;">
+                    <a href="{{ route('admin.data') }}" style="width: 100%; border: 1px solid #93C5FD; background-color: #FFFFFF; color: #1D61E7; font-weight: 700; font-size: 14px; padding: 12px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        🔄 Reset
+                    </a>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Tabel Pasang Surut -->
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 14px;">
+                    <thead style="background-color: #D7E5F9; color: #0F172A; font-weight: 700; font-size: 13px;">
                         <tr>
-                            <td>
-                                <span style="text-transform:uppercase;font-size:10px;font-weight:700;background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;">{{ $up->file_type }}</span>
-                                <span style="margin-left:6px;font-weight:600;">{{ $up->file_name }}</span>
-                            </td>
-                            <td>{{ $up->location->name ?? '-' }}</td>
-                            <td>{{ \Carbon\Carbon::create(null, $up->period_month, 1)->translatedFormat('F') }} {{ $up->period_year }}</td>
-                            <td>{{ number_format($up->total_records) }}</td>
-                            <td>
-                                @if($up->status === 'completed')
-                                    <span class="badge-status aman">Selesai</span>
-                                @elseif($up->status === 'processing')
-                                    <span class="badge-status waspada">Proses</span>
-                                @else
-                                    <span class="badge-status bahaya">Gagal</span>
-                                @endif
-                            </td>
-                            <td style="color:#64748b;font-size:12px;">{{ $up->created_at->format('d/m/Y H:i') }}</td>
+                            <th style="padding: 16px 20px;">No</th>
+                            <th style="padding: 16px 20px;">Lokasi</th>
+                            <th style="padding: 16px 20px;">Tanggal</th>
+                            <th style="padding: 16px 20px;">Jam Pasang</th>
+                            <th style="padding: 16px 20px;">Tinggi Pasang</th>
+                            <th style="padding: 16px 20px;">Jam Surut</th>
+                            <th style="padding: 16px 20px;">Tinggi Surut</th>
+                            <th style="padding: 16px 20px;">Status</th>
+                            <th style="padding: 16px 20px;">Update</th>
+                            <th style="padding: 16px 20px; text-align: center;">Aksi</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-    @endif
-
-</div>
-
-{{-- ====================== MODAL TAMBAH ====================== --}}
-<div class="modal-overlay" id="modalTambah">
-    <div class="modal-content-box">
-        <div class="modal-header-custom">
-            <h3>➕ Tambah Prediksi Pasang Surut</h3>
-            <button onclick="closeModal('modalTambah')" class="modal-close-btn">✕</button>
-        </div>
-        <form action="{{ route('admin.data.store') }}" method="POST">
-            @csrf
-            <div class="modal-body-custom">
-                <div class="form-group-custom">
-                    <label>Lokasi Stasiun</label>
-                    <select name="location_id" required>
-                        <option value="">-- Pilih Lokasi --</option>
-                        @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group-custom">
-                    <label>Tanggal Prediksi</label>
-                    <input type="date" name="record_date" required value="{{ now()->format('Y-m-d') }}">
-                </div>
-                <div class="form-grid-2">
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Jam Pasang Tertinggi</label>
-                        <input type="text" name="high_tide_time" required placeholder="01.00 WIB">
-                    </div>
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Tinggi Pasang (meter)</label>
-                        <input type="number" step="0.01" name="high_tide_level" required placeholder="0.81">
-                    </div>
-                </div>
-                <div class="form-grid-2" style="margin-top:14px;">
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Jam Surut Terendah</label>
-                        <input type="text" name="low_tide_time" required placeholder="12.00 WIB">
-                    </div>
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Tinggi Surut (meter)</label>
-                        <input type="number" step="0.01" name="low_tide_level" required placeholder="-0.81">
-                    </div>
-                </div>
-                <div class="form-group-custom" style="margin-top:14px;">
-                    <label>Status Kondisi</label>
-                    <select name="status" required>
-                        <option value="Aman">🟢 Aman</option>
-                        <option value="Waspada">🟡 Waspada</option>
-                        <option value="Bahaya">🔴 Bahaya</option>
-                    </select>
-                </div>
+                    </thead>
+                    <tbody style="font-weight: 500; color: #334155;">
+                        @if(isset($records) && $records->count() > 0)
+                            @foreach ($records as $index => $record)
+                                <tr style="border-top: 1px solid #F1F5F9;">
+                                    <td style="padding: 16px 20px; color: #64748B;">{{ $index + 1 }}.</td>
+                                    <td style="padding: 16px 20px; font-weight: 700; color: #0F172A;">{{ $record->station->name ?? 'Surabaya Timur' }}</td>
+                                    <td style="padding: 16px 20px;">{{ \Carbon\Carbon::parse($record->recorded_at)->format('d Juli Y') }}</td>
+                                    <td style="padding: 16px 20px;">{{ \Carbon\Carbon::parse($record->recorded_at)->format('H.i') }} WIB</td>
+                                    <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">{{ number_format($record->water_level_cm / 100, 2) }} m</td>
+                                    <td style="padding: 16px 20px;">12.00 WIB</td>
+                                    <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">-0.91 m</td>
+                                    <td style="padding: 16px 20px;">
+                                        <span style="background-color: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+                                            Aman
+                                        </span>
+                                    </td>
+                                    <td style="padding: 16px 20px; color: #64748B;">10.00 WIB</td>
+                                    <td style="padding: 16px 20px; text-align: center;">
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button style="border: 1px solid #93C5FD; background-color: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 8px; cursor: pointer;">👁️</button>
+                                            <button style="border: 1px solid #FDE68A; background-color: #FEF3C7; color: #D97706; padding: 6px 10px; border-radius: 8px; cursor: pointer;">✏️</button>
+                                            <form action="{{ route('admin.data.delete', $record->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" style="border: 1px solid #FECACA; background-color: #FEE2E2; color: #DC2626; padding: 6px 10px; border-radius: 8px; cursor: pointer;">🗑️</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr style="border-top: 1px solid #F1F5F9;">
+                                <td style="padding: 16px 20px; color: #64748B;">1.</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #0F172A;">Surabaya Timur</td>
+                                <td style="padding: 16px 20px;">08 Juli 2026</td>
+                                <td style="padding: 16px 20px;">01.00 WIB</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">0.61 m</td>
+                                <td style="padding: 16px 20px;">12.00 WIB</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">-0.91 m</td>
+                                <td style="padding: 16px 20px;">
+                                    <span style="background-color: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+                                        Aman
+                                    </span>
+                                </td>
+                                <td style="padding: 16px 20px; color: #64748B;">10.00 WIB</td>
+                                <td style="padding: 16px 20px; text-align: center;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <button style="border: 1px solid #93C5FD; background-color: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 8px;">👁️</button>
+                                        <button style="border: 1px solid #FDE68A; background-color: #FEF3C7; color: #D97706; padding: 6px 10px; border-radius: 8px;">✏️</button>
+                                        <button style="border: 1px solid #FECACA; background-color: #FEE2E2; color: #DC2626; padding: 6px 10px; border-radius: 8px;">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr style="border-top: 1px solid #F1F5F9;">
+                                <td style="padding: 16px 20px; color: #64748B;">2.</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #0F172A;">Surabaya Barat</td>
+                                <td style="padding: 16px 20px;">08 Juli 2026</td>
+                                <td style="padding: 16px 20px;">03.15 WIB</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">0.62 m</td>
+                                <td style="padding: 16px 20px;">12.45 WIB</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">0.13 m</td>
+                                <td style="padding: 16px 20px;">
+                                    <span style="background-color: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+                                        Aman
+                                    </span>
+                                </td>
+                                <td style="padding: 16px 20px; color: #64748B;">11.00 WIB</td>
+                                <td style="padding: 16px 20px; text-align: center;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <button style="border: 1px solid #93C5FD; background-color: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 8px;">👁️</button>
+                                        <button style="border: 1px solid #FDE68A; background-color: #FEF3C7; color: #D97706; padding: 6px 10px; border-radius: 8px;">✏️</button>
+                                        <button style="border: 1px solid #FECACA; background-color: #FEE2E2; color: #DC2626; padding: 6px 10px; border-radius: 8px;">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr style="border-top: 1px solid #F1F5F9;">
+                                <td style="padding: 16px 20px; color: #64748B;">3.</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #0F172A;">Surabaya Pelabuhan</td>
+                                <td style="padding: 16px 20px;">08 Juli 2026</td>
+                                <td style="padding: 16px 20px;">03.30 WIB</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">0.63 m</td>
+                                <td style="padding: 16px 20px;">13.25 WIB</td>
+                                <td style="padding: 16px 20px; font-weight: 700; color: #1D61E7;">0.10 m</td>
+                                <td style="padding: 16px 20px;">
+                                    <span style="background-color: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+                                        Aman
+                                    </span>
+                                </td>
+                                <td style="padding: 16px 20px; color: #64748B;">12.00 WIB</td>
+                                <td style="padding: 16px 20px; text-align: center;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <button style="border: 1px solid #93C5FD; background-color: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 8px;">👁️</button>
+                                        <button style="border: 1px solid #FDE68A; background-color: #FEF3C7; color: #D97706; padding: 6px 10px; border-radius: 8px;">✏️</button>
+                                        <button style="border: 1px solid #FECACA; background-color: #FEE2E2; color: #DC2626; padding: 6px 10px; border-radius: 8px;">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
             </div>
-            <div class="modal-footer-custom">
-                <button type="button" onclick="closeModal('modalTambah')" class="btn-reset">Batal</button>
-                <button type="submit" class="btn-primary-add" style="border-radius:8px;">💾 Simpan Prediksi</button>
+
+            <div style="padding: 16px; border-top: 1px solid #E2E8F0;">
+                @if(isset($records))
+                    {{ $records->links() }}
+                @endif
             </div>
-        </form>
-    </div>
-</div>
-
-{{-- ====================== MODAL EDIT ====================== --}}
-<div class="modal-overlay" id="modalEdit">
-    <div class="modal-content-box">
-        <div class="modal-header-custom">
-            <h3>✏️ Edit Prediksi Pasang Surut</h3>
-            <button onclick="closeModal('modalEdit')" class="modal-close-btn">✕</button>
         </div>
-        <form id="formEdit" method="POST">
-            @csrf
-            @method('PUT')
-            <div class="modal-body-custom">
-                <div class="form-group-custom">
-                    <label>Lokasi Stasiun</label>
-                    <select name="location_id" id="editLocationId" required>
-                        <option value="">-- Pilih Lokasi --</option>
-                        @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group-custom">
-                    <label>Tanggal Prediksi</label>
-                    <input type="date" name="record_date" id="editRecordDate" required>
-                </div>
-                <div class="form-grid-2">
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Jam Pasang Tertinggi</label>
-                        <input type="text" name="high_tide_time" id="editHighTime" required>
+
+        <!-- Modal Upload File Excel / PDF -->
+        <div x-show="openUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden" @click.away="openUploadModal = false">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Input Data Pasang Surut (Excel / PDF)</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Unggah file Excel/PDF untuk diekstrak otomatis oleh parser Python.</p>
                     </div>
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Tinggi Pasang (meter)</label>
-                        <input type="number" step="0.01" name="high_tide_level" id="editHighLevel" required>
-                    </div>
+                    <button @click="openUploadModal = false" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
                 </div>
-                <div class="form-grid-2" style="margin-top:14px;">
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Jam Surut Terendah</label>
-                        <input type="text" name="low_tide_time" id="editLowTime" required>
+
+                <form action="{{ route('admin.data.upload') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Pilih Lokasi Pantai</label>
+                        <select name="station_id" class="w-full border border-slate-300 rounded-xl p-3 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <option value="">-- Pilih Lokasi --</option>
+                            @if(isset($stations))
+                                @foreach ($stations as $station)
+                                    <option value="{{ $station->id }}">{{ $station->name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
                     </div>
-                    <div class="form-group-custom" style="margin-bottom:0;">
-                        <label>Tinggi Surut (meter)</label>
-                        <input type="number" step="0.01" name="low_tide_level" id="editLowLevel" required>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Upload File Data (.xlsx, .csv, .pdf)</label>
+                        <div class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-xl p-6 text-center transition cursor-pointer">
+                            <input type="file" name="file_data" accept=".xlsx,.xls,.csv,.pdf" required class="hidden" id="file_data_input"
+                                onchange="document.getElementById('file_name_display').innerText = this.files[0] ? this.files[0].name : 'Pilih file Excel / PDF'">
+                            <label for="file_data_input" class="cursor-pointer space-y-2 block">
+                                <svg class="w-10 h-10 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <span id="file_name_display" class="block text-xs font-semibold text-[#1D61E7]">Klik untuk memilih file Excel / PDF</span>
+                                <span class="block text-[11px] text-slate-400">Ukuran file maksimal: 10 MB</span>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group-custom" style="margin-top:14px;">
-                    <label>Status Kondisi</label>
-                    <select name="status" id="editStatus" required>
-                        <option value="Aman">🟢 Aman</option>
-                        <option value="Waspada">🟡 Waspada</option>
-                        <option value="Bahaya">🔴 Bahaya</option>
-                    </select>
-                </div>
+
+                    <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                        <button type="button" @click="openUploadModal = false" class="px-4 py-2.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 text-xs font-semibold text-white bg-[#1D61E7] rounded-xl hover:bg-blue-700 transition shadow">
+                            Proses & Simpan Data
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div class="modal-footer-custom">
-                <button type="button" onclick="closeModal('modalEdit')" class="btn-reset">Batal</button>
-                <button type="submit" class="btn-primary-add" style="border-radius:8px;">💾 Update Data</button>
-            </div>
-        </form>
+        </div>
+
     </div>
-</div>
-
-{{-- ====================== MODAL DETAIL ====================== --}}
-<div class="modal-overlay" id="modalDetail">
-    <div class="modal-content-box">
-        <div class="modal-header-custom">
-            <h3>👁️ Detail Prediksi Pasang Surut</h3>
-            <button onclick="closeModal('modalDetail')" class="modal-close-btn">✕</button>
-        </div>
-        <div class="modal-body-custom" id="detailContent">
-            {{-- Diisi via JavaScript --}}
-        </div>
-        <div class="modal-footer-custom">
-            <button onclick="closeModal('modalDetail')" class="btn-reset">Tutup</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // === Modal Helpers ===
-    function openModal(id) {
-        document.getElementById(id).classList.add('active');
-    }
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('active');
-    }
-    // Close on backdrop click
-    document.querySelectorAll('.modal-overlay').forEach(function(modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) modal.classList.remove('active');
-        });
-    });
-
-    // === Open Edit Modal ===
-    function openEdit(data) {
-        var form = document.getElementById('formEdit');
-        var baseUrl = "{{ route('admin.data.update', '__ID__') }}";
-        form.action = baseUrl.replace('__ID__', data.id);
-
-        document.getElementById('editLocationId').value = data.location_id;
-        document.getElementById('editRecordDate').value = data.record_date;
-        document.getElementById('editHighTime').value = data.high_tide_time;
-        document.getElementById('editHighLevel').value = data.high_tide_level;
-        document.getElementById('editLowTime').value = data.low_tide_time;
-        document.getElementById('editLowLevel').value = data.low_tide_level;
-        document.getElementById('editStatus').value = data.status;
-
-        openModal('modalEdit');
-    }
-
-    // === Open Detail Modal ===
-    function openDetail(d) {
-        var statusClass = {'Aman': 'aman', 'Waspada': 'waspada', 'Bahaya': 'bahaya'}[d.status] || 'aman';
-        var html = `
-            <table style="width:100%;font-size:13px;border-collapse:collapse;">
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;width:160px;">📍 Lokasi</td>
-                    <td style="padding:10px 8px;font-weight:700;color:#0369a1;">${d.lokasi}</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">📅 Tanggal</td>
-                    <td style="padding:10px 8px;font-weight:600;">${d.tanggal}</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">🌊 Jam Pasang</td>
-                    <td style="padding:10px 8px;">${d.high_time}</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">📈 Tinggi Pasang</td>
-                    <td style="padding:10px 8px;font-weight:700;color:#15803d;">${d.high_level} m</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">⬇️ Jam Surut</td>
-                    <td style="padding:10px 8px;">${d.low_time}</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">📉 Tinggi Surut</td>
-                    <td style="padding:10px 8px;font-weight:700;color:#b91c1c;">${d.low_level} m</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">🚦 Status</td>
-                    <td style="padding:10px 8px;"><span class="badge-status ${statusClass}">${d.status}</span></td>
-                </tr>
-                <tr>
-                    <td style="padding:10px 8px;color:#64748b;font-weight:600;">🕐 Diperbarui</td>
-                    <td style="padding:10px 8px;color:#475569;">${d.update}</td>
-                </tr>
-            </table>
-        `;
-        document.getElementById('detailContent').innerHTML = html;
-        openModal('modalDetail');
-    }
-</script>
-
 </x-app-layout>
