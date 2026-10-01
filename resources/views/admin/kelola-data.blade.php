@@ -1,22 +1,22 @@
 <x-app-layout>
-    <div class="p-8 space-y-6 bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;" x-data="{ openUploadModal: false }">
+    <div class="bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;" x-data="{ openUploadModal: false }">
+        <!-- Tambahkan pt-6 atau pt-8 agar turun sedikit di bawah garis oranye -->
+        <div class="max-w-7xl mx-auto px-6 py-8 pt-6 space-y-6" style="padding-top: 32px;">
 
-        <!-- Title & Tombol Tambah Prediksi -->
-        <div class="flex items-center justify-between">
-            <div>
-                <!-- Font ditipiskan sedikit saja (font-weight: 700) -->
-                <h1 class="text-3xl font-bold text-[#0F172A] tracking-tight" style="color: #0F172A; font-weight: 700;">Kelola Prediksi Pasang Surut</h1>
-                <p class="text-sm font-medium text-slate-500 mt-1">Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
+            <!-- Header Title & Tombol Tambah Prediksi -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-[#0F172A] tracking-tight" style="color: #0F172A; font-weight: 700;">Kelola Prediksi Pasang Surut</h1>
+                    <p class="text-sm font-medium text-slate-500 mt-1">Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
+                </div>
+                
+                <button @click="openUploadModal = true"
+                    style="background-color: #1D61E7; color: #FFFFFF; font-weight: 700; padding: 12px 24px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; margin-right: 16px;"
+                    class="hover:bg-blue-700 shadow-md transition-all active:scale-95 mr-4">
+                    <span style="font-size: 18px; font-weight: 800; line-height: 1;">+</span>
+                    <span style="font-size: 14px; font-weight: 700;">Tambah Prediksi</span>
+                </button>
             </div>
-            
-            <!-- Tombol Tambah Prediksi digeser agak ke kiri sedikit (mr-4) -->
-            <button @click="openUploadModal = true"
-                style="background-color: #1D61E7; color: #FFFFFF; font-weight: 700; padding: 12px 24px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; margin-right: 16px;"
-                class="hover:bg-blue-700 shadow-md transition-all active:scale-95 mr-4">
-                <span style="font-size: 18px; font-weight: 800; line-height: 1;">+</span>
-                <span style="font-size: 14px; font-weight: 700;">Tambah Prediksi</span>
-            </button>
-        </div>
 
         <!-- Flash Alert Notification -->
         @if(session('success'))
@@ -330,4 +330,5 @@
         </div>
 
     </div>
+    
 </x-app-layout>

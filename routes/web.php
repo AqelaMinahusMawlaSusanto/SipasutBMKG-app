@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('user.dashboard');
 })->name('dashboard');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 Route::get('/user/dashboard', [DashboardController::class, 'index'])->name('user.dashboard');
 
@@ -24,7 +25,7 @@ Route::get('/lokasi', [LokasiController::class, 'index'])->name('lokasi.index');
 Route::get('/kalender', [KalenderController::class, 'index'])->name('kalender.index');
 
 // =====================================
-// AUTHENTICATION (Laravel Spatie Protected)
+// AUTHENTICATION (Laravel Protected)
 // =====================================
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
@@ -47,15 +48,16 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/data/upload', [AdminController::class, 'storeDataUpload'])->name('admin.data.upload');
     Route::delete('/data/upload/{id}', [AdminController::class, 'deleteDataUpload'])->name('admin.data.delete');
 
-    // 2. Kelola Lokasi (CRUD 5 Titik Pantai)
+    // 2. Kelola Lokasi (CRUD Titik Monitoring)
     Route::get('/lokasi', [AdminController::class, 'kelolaLokasi'])->name('admin.lokasi');
     Route::post('/lokasi', [AdminController::class, 'storeLocation'])->name('admin.lokasi.store');
     Route::put('/lokasi/{id}', [AdminController::class, 'updateLocation'])->name('admin.lokasi.update');
     Route::delete('/lokasi/{id}', [AdminController::class, 'deleteLocation'])->name('admin.lokasi.delete');
 
-    // 3. Kelola Profil
+    // 3. Kelola Profil (Mendukung admin.profil.update & profile.update)
     Route::get('/profil', [AdminController::class, 'kelolaProfil'])->name('admin.profil');
     Route::post('/profil', [AdminController::class, 'updateProfil'])->name('admin.profil.update');
+    Route::patch('/profil', [AdminController::class, 'updateProfil'])->name('profile.update');
 
     // 4. Kelola Notif
     Route::get('/notifikasi', [AdminController::class, 'kelolaNotif'])->name('admin.notif');
