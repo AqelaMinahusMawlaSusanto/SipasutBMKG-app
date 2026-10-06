@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\DataUpload;
 use App\Models\Location;
 use App\Models\Notification;
+use App\Models\Prediction;
 use App\Models\TidalData;
 use App\Models\User;
 use Carbon\Carbon;
@@ -31,34 +32,143 @@ class AdminController extends Controller
     }
 
     // ==========================================
-    // 1. KELOLA DATA (Upload & Riwayat File)
+    // 1. KELOLA DATA PASANG SURUT (PREDIKSI & UPLOAD)
     // ==========================================
     public function kelolaData(Request $request)
     {
-        $locations = Location::all();
-        $selectedLocationId = $request->query('location_id', $locations->first()?->id);
-        
-        $uploads = DataUpload::with(['location', 'uploader'])
-            ->when($request->query('location_id'), function ($q, $locId) {
-                return $q->where('location_id', $locId);
-            })
-            ->latest()
-            ->paginate(10);
+        $locations = Location::where('is_active', true)->get();
 
-        // Preview recent tidal data for selected location
-        $recentData = [];
-        if ($selectedLocationId) {
-            $recentData = TidalData::where('location_id', $selectedLocationId)
-                ->orderBy('record_date', 'desc')
-                ->orderBy('hour', 'asc')
-                ->take(72) // 3 days
-                ->get()
-                ->groupBy(function ($item) {
-                    return $item->record_date->format('Y-m-d');
-                });
+        // 1. Query Data Prediksi Pasang Surut
+        $query = Prediction::with('location');
+
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->location_id);
         }
 
-        return view('admin.kelola-data', compact('locations', 'uploads', 'selectedLocationId', 'recentData'));
+        if ($request->filled('date')) {
+            $query->whereDate('record_date', $request->date);
+        }
+
+        if ($request->filled('status') && $request->status !== 'Semua Kondisi') {
+            $query->where('status', $request->status);
+        }
+
+        // Sorting
+        $sort = $request->query('sort', 'terbaru');
+        if ($sort === 'terlama') {
+            $query->orderBy('record_date', 'asc')->orderBy('id', 'asc');
+        } elseif ($sort === 'lokasi') {
+            $query->join('locations', 'predictions.location_id', '=', 'locations.id')
+                ->orderBy('locations.name', 'asc')
+                ->select('predictions.*');
+        } else {
+            // Default terbaru
+            $query->orderBy('record_date', 'desc')->orderBy('location_id', 'asc');
+        }
+
+        $predictions = $query->paginate(10)->withQueryString();
+
+        // 2. 4 Kartu Statistik (Sesuai Desain Figma)
+        $totalData = Prediction::count();
+        $totalLokasi = Location::where('is_active', true)->count();
+
+        // Data terbaru / hari ini
+        $latestDate = Prediction::max('record_date') ?? now()->toDateString();
+        $dataHariIni = Prediction::whereDate('record_date', $latestDate)->count();
+
+        // Update Terakhir
+        $latestRecord = Prediction::latest('updated_at')->first();
+        $updateTerakhir = $latestRecord ? $latestRecord->updated_at->format('H.i \W\I\B') : '09.00 WIB';
+
+        // 3. Riwayat Upload Berkas (Opsional / Terintegrasi)
+        $uploads = DataUpload::with(['location', 'uploader'])->latest()->take(5)->get();
+
+        return view('admin.kelola-data', compact(
+            'locations',
+            'predictions',
+            'totalData',
+            'totalLokasi',
+            'dataHariIni',
+            'updateTerakhir',
+            'uploads'
+        ));
+    }
+
+    public function storePrediksi(Request $request)
+    {
+        $validated = $request->validate([
+            'location_id' => 'required|exists:locations,id',
+            'record_date' => 'required|date',
+            'high_tide_time' => 'required|string|max:50',
+            'high_tide_level' => 'required|numeric',
+            'low_tide_time' => 'required|string|max:50',
+            'low_tide_level' => 'required|numeric',
+            'status' => 'required|in:Aman,Waspada,Bahaya',
+        ]);
+
+        if (!str_contains($validated['high_tide_time'], 'WIB')) {
+            $validated['high_tide_time'] = str_replace(':', '.', $validated['high_tide_time']) . ' WIB';
+        }
+        if (!str_contains($validated['low_tide_time'], 'WIB')) {
+            $validated['low_tide_time'] = str_replace(':', '.', $validated['low_tide_time']) . ' WIB';
+        }
+
+        $prediksi = Prediction::create($validated);
+        $location = Location::find($validated['location_id']);
+
+        ActivityLog::record(
+            'create_prediction',
+            "Menambahkan data prediksi pasang surut {$location->name} tanggal {$validated['record_date']}."
+        );
+
+        return redirect()->route('admin.data')->with('success', 'Data prediksi pasang surut berhasil ditambahkan!');
+    }
+
+    public function updatePrediksi(Request $request, $id)
+    {
+        $prediksi = Prediction::findOrFail($id);
+
+        $validated = $request->validate([
+            'location_id' => 'required|exists:locations,id',
+            'record_date' => 'required|date',
+            'high_tide_time' => 'required|string|max:50',
+            'high_tide_level' => 'required|numeric',
+            'low_tide_time' => 'required|string|max:50',
+            'low_tide_level' => 'required|numeric',
+            'status' => 'required|in:Aman,Waspada,Bahaya',
+        ]);
+
+        if (!str_contains($validated['high_tide_time'], 'WIB')) {
+            $validated['high_tide_time'] = str_replace(':', '.', $validated['high_tide_time']) . ' WIB';
+        }
+        if (!str_contains($validated['low_tide_time'], 'WIB')) {
+            $validated['low_tide_time'] = str_replace(':', '.', $validated['low_tide_time']) . ' WIB';
+        }
+
+        $prediksi->update($validated);
+
+        ActivityLog::record(
+            'update_prediction',
+            "Memperbarui data prediksi pasang surut ID #{$prediksi->id} ({$prediksi->location->name})."
+        );
+
+        return redirect()->route('admin.data')->with('success', 'Data prediksi pasang surut berhasil diperbarui!');
+    }
+
+    public function deletePrediksi($id)
+    {
+        $prediksi = Prediction::findOrFail($id);
+        $locName = $prediksi->location->name ?? 'Lokasi';
+        $date = $prediksi->record_date->format('d/m/Y');
+
+        $prediksi->delete();
+
+        ActivityLog::record(
+            'delete_prediction',
+            "Menghapus data prediksi pasang surut {$locName} tanggal {$date}."
+        );
+
+        return redirect()->route('admin.data')->with('success', 'Data prediksi berhasil dihapus.');
     }
 
     public function storeDataUpload(Request $request)
@@ -348,7 +458,9 @@ class AdminController extends Controller
 
         $admin->name = $request->name;
         $admin->email = $request->email;
-        $admin->phone = $request->phone;
+        if ($request->has('phone')) {
+            $admin->phone = $request->phone;
+        }
 
         if ($request->filled('new_password')) {
             if (!Hash::check($request->current_password, $admin->password)) {
