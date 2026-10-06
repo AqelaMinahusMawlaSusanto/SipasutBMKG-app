@@ -175,17 +175,31 @@ class AdminController extends Controller
     {
         $request->validate([
             'location_id' => 'required|exists:locations,id',
-            'period_month' => 'required|integer|between:1,12',
-            'period_year' => 'required|integer|min:2020|max:2035',
-            'files' => 'required|array',
-            'files.*' => 'file|mimes:xlsx,xls,csv,pdf|max:10240', // max 10MB per file
+            'period_month' => 'nullable|integer|between:1,12',
+            'period_year' => 'nullable|integer|min:2020|max:2035',
+            'file_data' => 'nullable|file|mimes:xlsx,xls,csv,pdf,txt|max:15360',
+            'files' => 'nullable|array',
+            'files.*' => 'file|mimes:xlsx,xls,csv,pdf,txt|max:15360',
         ]);
 
-        $uploadedFiles = $request->file('files');
+        $uploadedFiles = [];
+        if ($request->hasFile('file_data')) {
+            $uploadedFiles[] = $request->file('file_data');
+        } elseif ($request->hasFile('files')) {
+            $uploadedFiles = $request->file('files');
+        } elseif ($request->hasFile('file')) {
+            $uploadedFiles[] = $request->file('file');
+        }
+
+        if (empty($uploadedFiles)) {
+            return back()->with('warning', 'Pilih minimal satu berkas CSV, Excel, atau PDF.');
+        }
+
         $location = Location::findOrFail($request->location_id);
-        $month = (int)$request->period_month;
-        $year = (int)$request->period_year;
+        $month = (int)($request->period_month ?: now()->month);
+        $year = (int)($request->period_year ?: now()->year);
         $successCount = 0;
+        $totalPredCount = 0;
         $errors = [];
 
         foreach ($uploadedFiles as $file) {
@@ -206,7 +220,7 @@ class AdminController extends Controller
                 'status' => 'processing',
             ]);
 
-            // Call Python Microservice or fallback Python script
+            // Call Python parser
             $parseResult = $this->runPythonParser($fullLocalPath, $location->code, $month, $year);
 
             if (!empty($parseResult['error'])) {
@@ -214,17 +228,35 @@ class AdminController extends Controller
                     'status' => 'failed',
                     'error_message' => $parseResult['error']
                 ]);
-                $errors[] = "File {$originalName}: " . $parseResult['error'];
+                $errors[] = "Berkas {$originalName}: " . $parseResult['error'];
             } else {
-                // Save records into tidal_data table
-                $items = $parseResult['data'] ?? [];
+                $predItems = $parseResult['predictions'] ?? [];
+                $hourlyItems = $parseResult['hourly_data'] ?? $parseResult['data'] ?? [];
                 $recordsToUpsert = [];
 
-                foreach ($items as $item) {
+                // 1. Simpan ke tabel predictions (untuk tabel Kelola Prediksi di web)
+                foreach ($predItems as $pred) {
+                    Prediction::updateOrCreate(
+                        [
+                            'location_id' => $location->id,
+                            'record_date' => $pred['record_date'],
+                        ],
+                        [
+                            'high_tide_time' => $pred['high_tide_time'],
+                            'high_tide_level' => $pred['high_tide_level'],
+                            'low_tide_time' => $pred['low_tide_time'],
+                            'low_tide_level' => $pred['low_tide_level'],
+                            'status' => $pred['status'] ?? 'Aman',
+                        ]
+                    );
+                    $totalPredCount++;
+                }
+
+                // 2. Simpan ke tabel tidal_data (untuk matriks jam & download)
+                foreach ($hourlyItems as $item) {
                     $day = $item['day'];
                     $hour = $item['hour'];
                     $level = $item['water_level'];
-
                     $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
 
                     $recordsToUpsert[] = [
@@ -248,9 +280,10 @@ class AdminController extends Controller
                     }
                 }
 
+                $totalProcessed = count($recordsToUpsert) > 0 ? count($recordsToUpsert) : count($predItems);
                 $upload->update([
                     'status' => 'completed',
-                    'total_records' => count($recordsToUpsert),
+                    'total_records' => $totalProcessed,
                 ]);
 
                 $successCount++;
@@ -259,14 +292,14 @@ class AdminController extends Controller
 
         ActivityLog::record(
             'upload_data',
-            "Admin mengupload {$successCount} file pasang surut untuk titik {$location->name} periode {$month}/{$year}."
+            "Admin mengimpor {$successCount} berkas pasang surut ({$totalPredCount} data prediksi) untuk lokasi {$location->name} periode {$month}/{$year}."
         );
 
         if (!empty($errors)) {
-            return back()->with('warning', "Berhasil memproses {$successCount} file. Beberapa file mengalami kendala: " . implode('; ', $errors));
+            return back()->with('warning', "Berhasil memproses {$successCount} berkas ({$totalPredCount} data prediksi). Kendala: " . implode('; ', $errors));
         }
 
-        return back()->with('success', "Berhasil mengupload dan memproses {$successCount} file data pasang surut!");
+        return back()->with('success', "Berhasil mengimpor {$totalPredCount} data prediksi pasang surut dari {$successCount} berkas!");
     }
 
     public function deleteDataUpload($id)
@@ -277,13 +310,13 @@ class AdminController extends Controller
         // Hapus file fisik jika ada
         Storage::disk('public')->delete($upload->file_path);
         
-        // Hapus data terkait (akan cascade hapus tidal_data upload_id jika ada)
+        // Hapus data terkait
         TidalData::where('upload_id', $upload->id)->delete();
         $upload->delete();
 
-        ActivityLog::record('delete_upload', "Menghapus riwayat upload file: {$fileName}");
+        ActivityLog::record('delete_upload', "Menghapus riwayat upload berkas: {$fileName}");
 
-        return back()->with('success', "Data upload '{$fileName}' berhasil dihapus.");
+        return back()->with('success', "Berkas '{$fileName}' berhasil dihapus.");
     }
 
     private function runPythonParser(string $filePath, string $locationCode, int $month, int $year): array
@@ -302,14 +335,14 @@ class AdminController extends Controller
                 return $json['parsed'] ?? [];
             }
         } catch (\Exception $e) {
-            // FastAPI tidak menyala, jalankan fallback via command line python parser.py
+            // FastAPI tidak aktif, jalankan fallback via Python CLI
         }
 
-        // 2. Fallback execution via python CLI
+        // 2. Eksekusi via Python CLI (cli_parser.py)
         try {
             $escapedPath = escapeshellarg($filePath);
             $pyScript = escapeshellarg(base_path('python_service/cli_parser.py'));
-            $cmd = "python {$pyScript} {$escapedPath} 2>&1";
+            $cmd = "python {$pyScript} {$escapedPath} {$month} {$year} 2>&1";
             $output = shell_exec($cmd);
             $decoded = json_decode($output, true);
 
@@ -320,7 +353,7 @@ class AdminController extends Controller
             // fallback error
         }
 
-        // 3. Fallback PHP parser jika python CLI terkendala
+        // 3. Fallback PHP parser jika Python CLI tidak tersedia
         return $this->fallbackPhpParser($filePath, $month, $year);
     }
 
@@ -370,12 +403,44 @@ class AdminController extends Controller
     }
 
     // ==========================================
-    // 2. KELOLA LOKASI (CRUD 5 Titik Pantai)
+    // 2. KELOLA LOKASI (CRUD Titik Monitoring Pantai)
     // ==========================================
-    public function kelolaLokasi()
+    public function kelolaLokasi(Request $request)
     {
-        $locations = Location::withCount('tidalData')->get();
-        return view('admin.kelola-lokasi', compact('locations'));
+        $query = Location::withCount(['tidalData', 'predictions']);
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")
+                  ->orWhere('code', 'like', "%{$s}%")
+                  ->orWhere('institution', 'like', "%{$s}%")
+                  ->orWhere('description', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'active' || $request->status === 'Aktif') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive' || $request->status === 'Non-Aktif') {
+                $query->where('is_active', false);
+            }
+        }
+
+        $locations = $query->orderBy('name', 'asc')->paginate(10)->withQueryString();
+
+        $totalLocations = Location::count();
+        $activeLocations = Location::where('is_active', true)->count();
+        $inactiveLocations = Location::where('is_active', false)->count();
+        $totalDataPoints = TidalData::count();
+
+        return view('admin.kelola-lokasi', compact(
+            'locations',
+            'totalLocations',
+            'activeLocations',
+            'inactiveLocations',
+            'totalDataPoints'
+        ));
     }
 
     public function storeLocation(Request $request)
@@ -387,15 +452,18 @@ class AdminController extends Controller
             'longitude' => 'required|numeric|between:-180,180',
             'institution' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'nullable',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', true);
-        Location::create($validated);
+        $validated['code'] = strtoupper(trim($validated['code']));
+        $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : true;
+        $validated['institution'] = $validated['institution'] ?? 'BMKG Stasiun Meteorologi Maritim Perak Surabaya';
 
-        ActivityLog::record('create_location', "Menambahkan titik pengamatan baru: {$validated['name']} ({$validated['code']})");
+        $location = Location::create($validated);
 
-        return back()->with('success', 'Titik pengamatan pantai berhasil ditambahkan!');
+        ActivityLog::record('create_location', "Menambahkan titik monitoring baru: {$location->name} ({$location->code})");
+
+        return redirect()->route('admin.lokasi')->with('success', 'Titik monitoring pantai berhasil ditambahkan!');
     }
 
     public function updateLocation(Request $request, $id)
@@ -409,26 +477,30 @@ class AdminController extends Controller
             'longitude' => 'required|numeric|between:-180,180',
             'institution' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'nullable',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active');
+        $validated['code'] = strtoupper(trim($validated['code']));
+        $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : false;
+
         $location->update($validated);
 
-        ActivityLog::record('update_location', "Memperbarui titik pengamatan: {$location->name}");
+        ActivityLog::record('update_location', "Memperbarui data titik monitoring: {$location->name} ({$location->code})");
 
-        return back()->with('success', 'Titik pengamatan pantai berhasil diperbarui!');
+        return redirect()->route('admin.lokasi')->with('success', 'Data titik monitoring berhasil diperbarui!');
     }
 
     public function deleteLocation($id)
     {
         $location = Location::findOrFail($id);
         $name = $location->name;
+        $code = $location->code;
+
         $location->delete();
 
-        ActivityLog::record('delete_location', "Menghapus titik pengamatan pantai: {$name}");
+        ActivityLog::record('delete_location', "Menghapus titik monitoring: {$name} ({$code})");
 
-        return back()->with('success', "Titik pengamatan '{$name}' berhasil dihapus.");
+        return redirect()->route('admin.lokasi')->with('success', "Titik monitoring '{$name}' berhasil dihapus.");
     }
 
     // ==========================================
@@ -479,12 +551,81 @@ class AdminController extends Controller
     // ==========================================
     // 4. KELOLA NOTIF (Alerts & Warnings)
     // ==========================================
-    public function kelolaNotif()
+    public function kelolaNotif(Request $request)
     {
-        $notifications = Notification::with(['location', 'creator'])->latest()->paginate(10);
-        $locations = Location::where('is_active', true)->get();
+        $query = Notification::with(['location', 'creator']);
 
-        return view('admin.kelola-notif', compact('notifications', 'locations'));
+        // 1. Tab / Kategori Filter
+        $tab = $request->query('tab', 'semua');
+        if ($tab === 'peringatan') {
+            $query->where(function($q) {
+                $q->where('type', 'Peringatan')
+                  ->orWhere('type', 'warning')
+                  ->orWhere('type', 'danger');
+            });
+        } elseif ($tab === 'informasi') {
+            $query->where(function($q) {
+                $q->where('type', 'Informasi')
+                  ->orWhere('type', 'info')
+                  ->orWhere('type', 'success');
+            });
+        }
+
+        // 2. Search Text Filter
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function($q) use ($s) {
+                $q->where('title', 'like', "%{$s}%")
+                  ->orWhere('message', 'like', "%{$s}%")
+                  ->orWhereHas('location', function($sub) use ($s) {
+                      $sub->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%");
+                  });
+            });
+        }
+
+        // 3. Order / Sorting
+        $order = $request->input('order', 'latest');
+        if ($order === 'oldest') {
+            $query->orderBy('created_at', 'asc')->orderBy('id', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        }
+
+        $notifications = $query->paginate(10)->withQueryString();
+        $locations = Location::where('is_active', true)->orderBy('name')->get();
+
+        // 4. Counts & Stat Cards
+        $totalNotifikasi = Notification::count();
+        $peringatanAktif = Notification::where('is_active', true)
+            ->where(function($q) {
+                $q->where('type', 'Peringatan')->orWhere('type', 'warning')->orWhere('type', 'danger');
+            })->count();
+        $informasiAktif = Notification::where('is_active', true)
+            ->where(function($q) {
+                $q->where('type', 'Informasi')->orWhere('type', 'info')->orWhere('type', 'success');
+            })->count();
+        $notifikasiTerkirim = Notification::where('is_active', true)->count();
+
+        $countSemua = $totalNotifikasi;
+        $countPeringatan = Notification::where(function($q) {
+            $q->where('type', 'Peringatan')->orWhere('type', 'warning')->orWhere('type', 'danger');
+        })->count();
+        $countInformasi = Notification::where(function($q) {
+            $q->where('type', 'Informasi')->orWhere('type', 'info')->orWhere('type', 'success');
+        })->count();
+
+        return view('admin.kelola-notif', compact(
+            'notifications',
+            'locations',
+            'totalNotifikasi',
+            'peringatanAktif',
+            'informasiAktif',
+            'notifikasiTerkirim',
+            'countSemua',
+            'countPeringatan',
+            'countInformasi',
+            'tab'
+        ));
     }
 
     public function storeNotif(Request $request)
@@ -492,20 +633,42 @@ class AdminController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => 'required|in:info,warning,danger,success',
+            'type' => 'required|string|in:Informasi,Peringatan,info,warning,danger,success',
             'location_id' => 'nullable|exists:locations,id',
             'threshold_value' => 'nullable|integer',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'nullable',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : true;
         $validated['created_by'] = Auth::id();
 
-        Notification::create($validated);
+        $notif = Notification::create($validated);
 
-        ActivityLog::record('create_notification', "Membuat notifikasi banner baru: {$validated['title']}");
+        ActivityLog::record('create_notification', "Membuat notifikasi banner baru: {$notif->title}");
 
-        return back()->with('success', 'Notifikasi peringatan berhasil diterbitkan!');
+        return redirect()->route('admin.notif')->with('success', 'Notifikasi berhasil diterbitkan!');
+    }
+
+    public function updateNotif(Request $request, $id)
+    {
+        $notif = Notification::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string',
+            'type' => 'required|string|in:Informasi,Peringatan,info,warning,danger,success',
+            'location_id' => 'nullable|exists:locations,id',
+            'threshold_value' => 'nullable|integer',
+            'is_active' => 'nullable',
+        ]);
+
+        $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : false;
+
+        $notif->update($validated);
+
+        ActivityLog::record('update_notification', "Memperbarui data notifikasi: {$notif->title}");
+
+        return redirect()->route('admin.notif')->with('success', 'Notifikasi berhasil diperbarui!');
     }
 
     public function toggleNotif($id)
@@ -527,7 +690,7 @@ class AdminController extends Controller
 
         ActivityLog::record('delete_notification', "Menghapus notifikasi: {$title}");
 
-        return back()->with('success', 'Notifikasi berhasil dihapus.');
+        return redirect()->route('admin.notif')->with('success', 'Notifikasi berhasil dihapus.');
     }
 
     // ==========================================
@@ -535,25 +698,92 @@ class AdminController extends Controller
     // ==========================================
     public function loginAktivitas(Request $request)
     {
-        $actionFilter = $request->query('action');
-        $search = $request->query('search');
+        $query = ActivityLog::query();
 
-        $logs = ActivityLog::when($actionFilter, function ($q, $action) {
-                return $q->where('action', $action);
-            })
-            ->when($search, function ($q, $s) {
-                return $q->where(function ($sub) use ($s) {
-                    $sub->where('user_name', 'like', "%{$s}%")
-                        ->orWhere('user_email', 'like', "%{$s}%")
-                        ->orWhere('ip_address', 'like', "%{$s}%")
-                        ->orWhere('description', 'like', "%{$s}%");
+        // 1. Filter Action / Jenis Aktivitas
+        if ($request->filled('action')) {
+            $action = $request->action;
+            if ($action === 'login') {
+                $query->whereIn('action', ['login', 'failed_login', 'logout']);
+            } elseif ($action === 'data' || $action === 'Data Pasang Surut') {
+                $query->whereIn('action', ['create_prediction', 'update_prediction', 'delete_prediction', 'upload_data', 'delete_upload']);
+            } elseif ($action === 'lokasi' || $action === 'Lokasi Monitoring') {
+                $query->whereIn('action', ['create_location', 'update_location', 'delete_location']);
+            } elseif ($action === 'notifikasi' || $action === 'Notifikasi') {
+                $query->whereIn('action', ['create_notification', 'toggle_notification', 'delete_notification']);
+            } elseif ($action === 'profil' || $action === 'Profil') {
+                $query->whereIn('action', ['update_profile', 'register']);
+            } else {
+                $query->where('action', $action);
+            }
+        }
+
+        // 2. Filter Tanggal
+        if ($request->filled('tanggal')) {
+            $query->whereDate('created_at', $request->tanggal);
+        } elseif ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        // 3. Filter Status (Sukses / Gagal)
+        if ($request->filled('status') && $request->status !== 'Semua Kondisi' && $request->status !== '') {
+            if ($request->status === 'Gagal' || $request->status === 'failed') {
+                $query->where(function($q) {
+                    $q->where('action', 'like', '%fail%')
+                      ->orWhere('action', 'like', '%gagal%')
+                      ->orWhere('description', 'like', '%gagal%')
+                      ->orWhere('description', 'like', '%failed%');
                 });
-            })
-            ->latest('id')
-            ->paginate(15);
+            } elseif ($request->status === 'Sukses' || $request->status === 'success') {
+                $query->where(function($q) {
+                    $q->where('action', 'not like', '%fail%')
+                      ->where('action', 'not like', '%gagal%')
+                      ->where('description', 'not like', '%gagal%')
+                      ->where('description', 'not like', '%failed%');
+                });
+            }
+        }
 
+        // 4. Filter Search Text
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function ($sub) use ($s) {
+                $sub->where('user_name', 'like', "%{$s}%")
+                    ->orWhere('user_email', 'like', "%{$s}%")
+                    ->orWhere('ip_address', 'like', "%{$s}%")
+                    ->orWhere('description', 'like', "%{$s}%")
+                    ->orWhere('action', 'like', "%{$s}%");
+            });
+        }
+
+        // 5. Sorting
+        $order = $request->input('order', 'latest');
+        if ($order === 'oldest') {
+            $query->orderBy('created_at', 'asc')->orderBy('id', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        }
+
+        $logs = $query->paginate(15)->withQueryString();
+
+        // 6. 4 Kartu Statistik
+        $totalAktivitas = ActivityLog::count();
+        $loginBerhasil = ActivityLog::where('action', 'login')->count();
+        $loginGagal = ActivityLog::whereIn('action', ['failed_login', 'login_failed'])
+            ->orWhere('description', 'like', '%gagal%')
+            ->count();
+        $aktivitasLainnya = ActivityLog::whereNotIn('action', ['login', 'failed_login', 'login_failed'])->count();
+
+        // Distinct actions for dropdown
         $actions = ActivityLog::select('action')->distinct()->pluck('action');
 
-        return view('admin.login-aktivitas', compact('logs', 'actions', 'actionFilter', 'search'));
+        return view('admin.login-aktivitas', compact(
+            'logs',
+            'actions',
+            'totalAktivitas',
+            'loginBerhasil',
+            'loginGagal',
+            'aktivitasLainnya'
+        ));
     }
 }

@@ -62,6 +62,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // 4. Kelola Notif
     Route::get('/notifikasi', [AdminController::class, 'kelolaNotif'])->name('admin.notif');
     Route::post('/notifikasi', [AdminController::class, 'storeNotif'])->name('admin.notif.store');
+    Route::put('/notifikasi/{id}', [AdminController::class, 'updateNotif'])->name('admin.notif.update');
     Route::post('/notifikasi/{id}/toggle', [AdminController::class, 'toggleNotif'])->name('admin.notif.toggle');
     Route::delete('/notifikasi/{id}', [AdminController::class, 'deleteNotif'])->name('admin.notif.delete');
 
