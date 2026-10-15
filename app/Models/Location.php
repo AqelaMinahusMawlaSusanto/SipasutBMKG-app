@@ -42,6 +42,6 @@ class Location extends Model
 
     public function predictions()
     {
-    return $this->hasMany(Prediction::class);
+        return $this->hasMany(Prediction::class);
     }
 }
