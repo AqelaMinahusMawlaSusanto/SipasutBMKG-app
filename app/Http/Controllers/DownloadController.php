@@ -2,133 +2,160 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Location;
+use App\Models\Prediction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Halaman Download Pasang Surut (sisi USER).
+ *
+ * Data TIDAK lagi dummy. Tabel di halaman ini membaca tabel `predictions`,
+ * yaitu tabel yang sama yang diisi admin lewat menu Kelola Data
+ * (AdminController@storePrediksi dan AdminController@storeDataUpload).
+ * Jadi begitu admin menambah / meng-upload / menghapus data, halaman ini
+ * langsung ikut berubah tanpa perlu menyalin data ke mana pun.
+ */
 class DownloadController extends Controller
 {
+    private const PER_PAGE = 5;
+
     /**
-     * 5 lokasi dasar (nilai jam/tinggi pasang-surut & status masih dummy,
-     * sesuai desain Figma). TODO: ganti dengan data asli dari hasil
-     * import Google Colab begitu sudah tersedia.
+     * Lokasi aktif dari tabel `locations` (dikelola admin di Kelola Lokasi).
+     * Dipakai untuk dropdown filter dan pin di peta.
+     * Bentuk array sengaja dibuat sama seperti sebelumnya supaya
+     * download.blade.php dan download.js tidak perlu diubah.
      */
-    private function baseLocations(): array
+    private function locations(): array
+    {
+        return Location::where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(function (Location $loc) {
+                // Warna pin di peta = status prediksi terbaru lokasi itu
+                $status = $loc->predictions()
+                    ->orderByDesc('record_date')
+                    ->orderByDesc('id')
+                    ->value('status');
+
+                return [
+                    'slug'   => strtolower($loc->code),
+                    'label'  => $loc->name,
+                    'lat'    => $loc->latitude,
+                    'lng'    => $loc->longitude,
+                    'status' => strtolower($status ?? 'Aman'),
+                ];
+            })
+            ->all();
+    }
+
+    /** Terima hanya format YYYY-MM-DD (dari input type="date"), selain itu diabaikan. */
+    private function validDate(mixed $value): ?string
+    {
+        return (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) ? $value : null;
+    }
+
+    /** Susun query dari filter di URL (dipakai tabel dan export CSV). */
+    private function buildQuery(Request $request): Builder
+    {
+        $query = Prediction::with('location');
+
+        $lokasi = $request->query('lokasi');
+        if (is_string($lokasi) && $lokasi !== '') {
+            $query->whereHas('location', fn ($q) => $q->where('code', strtoupper($lokasi)));
+        }
+
+        $status = $request->query('status');
+        if (is_string($status) && $status !== '' && $status !== 'semua') {
+            // Di database tersimpan "Aman" / "Waspada" / "Bahaya"
+            $query->where('status', ucfirst(strtolower($status)));
+        }
+
+        if ($mulai = $this->validDate($request->query('tanggal_mulai'))) {
+            $query->whereDate('record_date', '>=', $mulai);
+        }
+
+        if ($akhir = $this->validDate($request->query('tanggal_akhir'))) {
+            $query->whereDate('record_date', '<=', $akhir);
+        }
+
+        if ($request->query('urutkan', 'terkini') === 'terlama') {
+            $query->orderBy('record_date')->orderBy('location_id');
+        } else {
+            $query->orderByDesc('record_date')->orderBy('location_id');
+        }
+
+        return $query;
+    }
+
+    /** Ubah 1 baris database menjadi array yang dipakai view. */
+    private function toRow(Prediction $p, int $no): array
     {
         return [
-            ['slug' => 'surabaya-timur',      'label' => 'Surabaya Timur',      'lat' => -7.2498, 'lng' => 112.7501, 'jam_pasang' => '01.00 WIB', 'tinggi_pasang' => 0.61,  'jam_surut' => '12.00 WIB', 'tinggi_surut' => -0.91, 'status' => 'aman',    'update' => '10.00 WIB'],
-            ['slug' => 'surabaya-barat',      'label' => 'Surabaya Barat',      'lat' => -7.2650, 'lng' => 112.6900, 'jam_pasang' => '03.15 WIB', 'tinggi_pasang' => 0.62,  'jam_surut' => '12.45 WIB', 'tinggi_surut' => 0.13,  'status' => 'aman',    'update' => '11.00 WIB'],
-            ['slug' => 'surabaya-pelabuhan',  'label' => 'Surabaya Pelabuhan',  'lat' => -7.2050, 'lng' => 112.7350, 'jam_pasang' => '03.30 WIB', 'tinggi_pasang' => 0.63,  'jam_surut' => '13.25 WIB', 'tinggi_surut' => 0.10,  'status' => 'aman',    'update' => '12.00 WIB'],
-            ['slug' => 'kalianget',           'label' => 'Kalianget',           'lat' => -7.0500, 'lng' => 113.9200, 'jam_pasang' => '04.20 WIB', 'tinggi_pasang' => 0.64,  'jam_surut' => '13.25 WIB', 'tinggi_surut' => -0.98, 'status' => 'waspada', 'update' => '13.00 WIB'],
-            ['slug' => 'banyuwangi',          'label' => 'Banyuwangi',          'lat' => -8.2192, 'lng' => 114.3691, 'jam_pasang' => '05.15 WIB', 'tinggi_pasang' => 0.65,  'jam_surut' => '13.55 WIB', 'tinggi_surut' => -0.02, 'status' => 'bahaya',  'update' => '14.00 WIB'],
+            'no'            => $no,
+            'lokasi'        => $p->location->name ?? '-',
+            'lokasi_slug'   => strtolower($p->location->code ?? ''),
+            'tanggal'       => $p->record_date->locale('id')->translatedFormat('d F Y'),
+            'jam_pasang'    => $p->high_tide_time,
+            'tinggi_pasang' => $p->high_tide_level,
+            'jam_surut'     => $p->low_tide_time,
+            'tinggi_surut'  => $p->low_tide_level,
+            'status'        => strtolower($p->status),
+            'update'        => $p->updated_at
+                ? $p->updated_at->copy()->timezone('Asia/Jakarta')->format('H.i') . ' WIB'
+                : '-',
         ];
-    }
-
-    /** 5 tanggal dummy, urutannya sesuai desain (bukan urut kronologis murni) */
-    private function dummyDates(): array
-    {
-        return ['08 Juli 2026', '01 Juli 2026', '08 Juni 2026', '15 Juni 2026', '01 Mei 2026'];
-    }
-
-    /** Bangun 25 baris data (5 lokasi x 5 tanggal) */
-    private function allRows(): array
-    {
-        $rows = [];
-        $no = 1;
-
-        foreach ($this->dummyDates() as $tanggal) {
-            foreach ($this->baseLocations() as $loc) {
-                $rows[] = [
-                    'no'            => $no++,
-                    'lokasi'        => $loc['label'],
-                    'lokasi_slug'   => $loc['slug'],
-                    'tanggal'       => $tanggal,
-                    'jam_pasang'    => $loc['jam_pasang'],
-                    'tinggi_pasang' => $loc['tinggi_pasang'],
-                    'jam_surut'     => $loc['jam_surut'],
-                    'tinggi_surut'  => $loc['tinggi_surut'],
-                    'status'        => $loc['status'],
-                    'update'        => $loc['update'],
-                ];
-            }
-        }
-
-        return $rows;
-    }
-
-    /** Terapkan filter dari query string ke kumpulan baris */
-    private function applyFilters(array $rows, Request $request): array
-    {
-        $lokasi = $request->query('lokasi');
-        $status = $request->query('status');
-        $urutkan = $request->query('urutkan', 'terkini');
-
-        if ($lokasi) {
-            $rows = array_values(array_filter($rows, fn ($r) => $r['lokasi_slug'] === $lokasi));
-        }
-
-        if ($status && $status !== 'semua') {
-            $rows = array_values(array_filter($rows, fn ($r) => $r['status'] === $status));
-        }
-
-        // Catatan: filter tanggal_mulai / tanggal_akhir belum diterapkan ke data
-        // dummy karena tanggalnya masih string acak, bukan objek tanggal asli.
-        // Setelah data asli (dari Colab) tersedia dalam kolom tanggal beneran,
-        // tinggal tambahkan whereBetween tanggal_mulai & tanggal_akhir di sini.
-
-        if ($urutkan === 'terlama') {
-            $rows = array_reverse($rows);
-        }
-
-        return $rows;
     }
 
     public function index(Request $request)
     {
-        $rows = $this->applyFilters($this->allRows(), $request);
+        $query = $this->buildQuery($request);
 
-        // Pagination manual (5 baris per halaman) supaya cocok dengan desain
-        $perPage = 5;
-        $page = max(1, (int) $request->query('page', 1));
-        $totalRows = count($rows);
+        $perPage    = self::PER_PAGE;
+        $totalRows  = (clone $query)->count();
         $totalPages = max(1, (int) ceil($totalRows / $perPage));
-        $page = min($page, $totalPages);
-        $paged = array_slice($rows, ($page - 1) * $perPage, $perPage);
+        $page       = min(max(1, (int) $request->query('page', 1)), $totalPages);
+
+        // Nomor urut berlanjut antar halaman: hal 1 = 1-5, hal 2 = 6-10, dst.
+        $rows = $query->forPage($page, $perPage)->get()
+            ->values()
+            ->map(fn (Prediction $p, int $i) => $this->toRow($p, ($page - 1) * $perPage + $i + 1))
+            ->all();
 
         return view('download', [
-            'rows'        => $paged,
-            'locations'   => $this->baseLocations(),
-            'page'        => $page,
-            'totalPages'  => $totalPages,
-            'totalRows'   => $totalRows,
-            'perPage'     => $perPage,
-            'filters'     => $request->only(['lokasi', 'tanggal_mulai', 'tanggal_akhir', 'urutkan', 'status', 'zona', 'datum']),
+            'rows'       => $rows,
+            'locations'  => $this->locations(),
+            'page'       => $page,
+            'totalPages' => $totalPages,
+            'totalRows'  => $totalRows,
+            'perPage'    => $perPage,
+            'filters'    => $request->only(['lokasi', 'tanggal_mulai', 'tanggal_akhir', 'urutkan', 'status', 'zona', 'datum']),
         ]);
     }
 
-    /** Export data (yang sedang difilter) sebagai CSV */
+    /** Export seluruh data yang sedang difilter (bukan cuma 1 halaman) sebagai CSV. */
     public function export(Request $request): StreamedResponse
     {
-        $rows = $this->applyFilters($this->allRows(), $request);
-
+        $items    = $this->buildQuery($request)->get();
         $filename = 'pasang-surut-' . now()->format('Y-m-d_His') . '.csv';
 
-        $callback = function () use ($rows) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['No', 'Lokasi', 'Tanggal', 'Jam Pasang', 'Tinggi Pasang (m)', 'Jam Surut', 'Tinggi Surut (m)', 'Status', 'Update']);
+        return response()->streamDownload(function () use ($items) {
+            $out = fopen('php://output', 'w');
 
-            foreach ($rows as $r) {
-                fputcsv($handle, [
+            fputcsv($out, ['No', 'Lokasi', 'Tanggal', 'Jam Pasang', 'Tinggi Pasang (m)', 'Jam Surut', 'Tinggi Surut (m)', 'Status', 'Update']);
+
+            foreach ($items as $i => $p) {
+                $r = $this->toRow($p, $i + 1);
+
+                fputcsv($out, [
                     $r['no'], $r['lokasi'], $r['tanggal'], $r['jam_pasang'],
                     $r['tinggi_pasang'], $r['jam_surut'], $r['tinggi_surut'],
                     ucfirst($r['status']), $r['update'],
                 ]);
             }
 
-            fclose($handle);
-        };
-
-        return response()->streamDownload($callback, $filename, [
-            'Content-Type' => 'text/csv',
-        ]);
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 }
