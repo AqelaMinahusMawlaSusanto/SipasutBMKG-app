@@ -35,7 +35,7 @@ class NotificationTest extends TestCase
         Notification::create([
             'title' => 'Peringatan Gelombang Tinggi',
             'message' => 'Tinggi gelombang mencapai 2.5 meter di Selat Madura.',
-            'type' => 'Peringatan',
+            'type' => 'warning',
             'is_active' => true,
             'created_by' => $this->admin->id,
         ]);
@@ -63,7 +63,7 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'title' => 'Informasi Pasang Normal',
-            'type' => 'Informasi',
+            'type' => 'info',
             'is_active' => true,
         ]);
     }
@@ -72,7 +72,7 @@ class NotificationTest extends TestCase
     {
         $notif = Notification::create([
             'title' => 'Judul Awal',
-            'type' => 'Informasi',
+            'type' => 'info',
             'message' => 'Pesan awal',
             'is_active' => true,
             'created_by' => $this->admin->id,
@@ -93,7 +93,7 @@ class NotificationTest extends TestCase
         $this->assertDatabaseHas('notifications', [
             'id' => $notif->id,
             'title' => 'Judul Diperbarui',
-            'type' => 'Peringatan',
+            'type' => 'warning',
         ]);
     }
 
@@ -101,7 +101,7 @@ class NotificationTest extends TestCase
     {
         $notif = Notification::create([
             'title' => 'Status Toggle Test',
-            'type' => 'Informasi',
+            'type' => 'info',
             'message' => 'Test toggle',
             'is_active' => true,
             'created_by' => $this->admin->id,
@@ -120,7 +120,7 @@ class NotificationTest extends TestCase
     {
         $notif = Notification::create([
             'title' => 'Notif Hapus Test',
-            'type' => 'Informasi',
+            'type' => 'info',
             'message' => 'Test hapus',
             'is_active' => false,
             'created_by' => $this->admin->id,
@@ -141,7 +141,7 @@ class NotificationTest extends TestCase
         Notification::create([
             'title' => 'Info Pemeliharaan Server',
             'message' => 'Server maintenance berkala',
-            'type' => 'Informasi',
+            'type' => 'info',
             'is_active' => true,
             'created_by' => $this->admin->id,
         ]);
@@ -149,7 +149,7 @@ class NotificationTest extends TestCase
         Notification::create([
             'title' => 'Peringatan Pasang Rob',
             'message' => 'Banjir rob di pesisir utara',
-            'type' => 'Peringatan',
+            'type' => 'warning',
             'is_active' => true,
             'created_by' => $this->admin->id,
         ]);
