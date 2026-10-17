@@ -1,0 +1,307 @@
+/* File ini melanjutkan variabel warna (--navy, --blue, dst.) yang sudah
+   didefinisikan di dashboard.css. Pastikan dashboard.css tetap ikut dimuat
+   di layouts/app.blade.php. */
+
+.lokasi-page {
+    padding: 32px 48px 64px;
+}
+
+.lokasi-page__header h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.lokasi-page__header p {
+    margin: 0 0 24px;
+    color: var(--slate);
+    font-size: 14px;
+}
+
+/* ---------- Baris pencarian ---------- */
+.lokasi-search-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.lokasi-search {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.lokasi-search__icon { flex-shrink: 0; }
+
+.lokasi-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: var(--ink);
+    background: transparent;
+}
+
+.lokasi-search input::placeholder { color: var(--slate-light); }
+
+.btn-cari {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 24px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-cari:hover { background: var(--navy); }
+
+/* ---------- Dropdown hasil pencarian ---------- */
+.lokasi-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+    padding: 8px;
+    z-index: 1000;
+}
+
+.lokasi-dropdown__label {
+    margin: 4px 8px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--slate);
+}
+
+.lokasi-dropdown ul { display: flex; flex-direction: column; gap: 2px; }
+
+.lokasi-dropdown__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.lokasi-dropdown__item:hover { background: var(--blue-light); }
+
+.lokasi-dropdown__item.is-active {
+    background: var(--blue-light);
+}
+
+.lokasi-dropdown__item.is-active strong { color: var(--blue); }
+
+.lokasi-dropdown__item strong {
+    display: block;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.lokasi-dropdown__item small {
+    display: block;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.lokasi-dropdown__empty {
+    padding: 14px 10px;
+    font-size: 13px;
+    color: var(--slate);
+    text-align: center;
+}
+
+/* ---------- Grid utama: peta + panel kanan ---------- */
+.lokasi-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.lokasi-map-card {
+    position: relative;
+    background: var(--surface);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .08);
+}
+
+#lokasiMap {
+    width: 100%;
+    height: 520px;
+    background: #cfe3f7;
+}
+
+/* Ikon marker kustom */
+.lokasi-pin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 3px 6px rgba(15, 23, 42, .35));
+}
+
+.lokasi-dot {
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .35);
+}
+
+.marker--tinggi { background: var(--red); }
+.marker--normal { background: var(--green); }
+.marker--rendah { background: var(--blue); }
+
+/* Tombol buka/tutup legenda, pojok kiri bawah peta */
+.legend-toggle {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: none;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 500;
+}
+
+.legend-toggle svg { transition: transform .15s ease; }
+.legend-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.legend-box {
+    position: absolute;
+    left: 16px;
+    bottom: 60px;
+    width: 210px;
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .25);
+    padding: 14px;
+    z-index: 500;
+}
+
+.legend-box__title { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--ink); }
+
+.legend-box ul { display: flex; flex-direction: column; gap: 10px; }
+
+.legend-box li { display: flex; align-items: flex-start; gap: 8px; }
+
+.legend-box .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.dot--tinggi { background: var(--red); }
+.dot--normal { background: var(--green); }
+.dot--rendah { background: var(--blue); }
+
+.legend-box strong { display: block; font-size: 12px; color: var(--ink); }
+.legend-box small { display: block; font-size: 11px; color: var(--slate); }
+
+/* ---------- Panel kanan ---------- */
+.lokasi-info { display: flex; flex-direction: column; gap: 20px; }
+
+.info-banner {
+    display: flex;
+    gap: 10px;
+    background: var(--blue-light);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.info-banner strong { display: block; font-size: 13px; color: var(--ink); margin-bottom: 2px; }
+.info-banner small { display: block; font-size: 12px; color: var(--slate); }
+
+.detail-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+}
+
+.detail-card h2 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--ink); }
+
+.detail-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    background: var(--bg);
+}
+
+.detail-card__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.detail-card__title-row h3 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ink); }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge--tinggi { background: var(--red-bg); color: var(--red); }
+.badge--normal { background: var(--green-bg); color: var(--green); }
+.badge--rendah { background: var(--blue-light); color: var(--blue); }
+
+.detail-card__kabupaten { margin: 6px 0 2px; font-size: 13px; color: var(--blue); font-weight: 600; }
+.detail-card__koordinat { margin: 0 0 14px; font-size: 12px; color: var(--slate); }
+
+.detail-card h4 {
+    margin: 0 0 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.detail-card__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--slate);
+    padding: 6px 0;
+}
+
+.detail-card__row strong { color: var(--navy); font-size: 13px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+    .lokasi-page { padding: 20px; }
+    .lokasi-search-row { flex-direction: column; }
+    .lokasi-grid { grid-template-columns: 1fr; }
+    #lokasiMap { height: 380px; }
+}

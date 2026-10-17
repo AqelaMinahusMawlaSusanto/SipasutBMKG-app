@@ -1,0 +1,319 @@
+/* File ini melanjutkan variabel warna (--navy, --blue, dst.) yang sudah
+   didefinisikan di dashboard.css. Pastikan dashboard.css tetap ikut dimuat
+   di layouts/app.blade.php. */
+
+.kalender-page {
+    padding: 32px 48px 64px;
+}
+
+.kalender-page__header h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.kalender-page__header p {
+    margin: 0 0 24px;
+    color: var(--slate);
+    font-size: 14px;
+}
+
+/* ---------- Kartu "Cari Lokasi" ---------- */
+.kalender-search-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+}
+
+.kalender-search-card__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+}
+
+.kalender-select {
+    position: relative;
+    max-width: 360px;
+}
+
+.kalender-select__control {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    cursor: pointer;
+}
+
+.kalender-select__control span#kalenderSelectValue.is-placeholder {
+    color: var(--slate-light);
+    font-weight: 400;
+}
+
+.kalender-select__list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+    padding: 6px;
+    z-index: 1000;
+}
+
+.kalender-select__item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    cursor: pointer;
+}
+
+.kalender-select__item:hover {
+    background: var(--blue-light);
+}
+
+.kalender-select__item.is-active {
+    background: var(--blue);
+    color: #fff;
+}
+
+/* ---------- Grid utama: kalender + panel detail ---------- */
+.kalender-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.kalender-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+}
+
+.kalender-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.kalender-card__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--navy);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+.kalender-card__title:hover {
+    background: var(--blue-light);
+}
+
+.kalender-nav {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.kalender-nav:hover {
+    background: var(--blue-light);
+}
+
+/* Panel ganti bulan/tahun cepat */
+.kalender-jump {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 14px;
+}
+
+.kalender-jump select {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.kalender-jump button {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.kalender-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 12px;
+    color: var(--slate-light);
+    margin-bottom: 6px;
+}
+
+.kalender-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 6px;
+}
+
+.kalender-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.kalender-day:hover {
+    background: var(--blue-light);
+}
+
+.kalender-day.is-outside {
+    color: var(--slate-light);
+    cursor: default;
+}
+
+.kalender-day.is-outside:hover {
+    background: transparent;
+}
+
+.kalender-day.is-selected {
+    background: var(--blue);
+    color: #fff;
+}
+
+/* ---------- Panel kanan: detail pasang/surut ---------- */
+.kalender-detail__date {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 0 0 14px;
+}
+
+.tide-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+}
+
+.tide-card__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.tide-card__header--pasang { background: #c7d9f9; }
+.tide-card__header--surut  { background: #d3ec8f; }
+
+.tide-card__body {
+    min-height: 70px;
+    padding: 16px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+}
+
+.tide-card__body.is-empty {
+    color: var(--slate-light);
+    font-size: 13px;
+}
+
+.tide-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 90px;
+}
+
+.tide-field__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--slate);
+}
+
+.tide-field__value {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.tide-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid var(--green);
+    color: var(--green);
+    background: var(--green-bg);
+}
+
+.tide-status.is-waspada {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: var(--amber-bg);
+}
+
+@media (max-width: 900px) {
+    .kalender-page { padding: 20px; }
+    .kalender-grid { grid-template-columns: 1fr; }
+}

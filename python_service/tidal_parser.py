@@ -24,8 +24,7 @@ def parse_tidal_matrix(rows: List[List[Any]], filename: str = "") -> Dict[str, A
 
     # Find the header row that contains 1..24 or Jam
     header_idx = -1
-    for idx, r in enumerate(cleaned_rows[:10]):
-        # check if this row has sequential hour indicators
+    for idx, r in enumerate(cleaned_rows[:15]):
         has_hours = sum(1 for c in r if c in [str(i) for i in range(1, 25)])
         if has_hours >= 5 or "jam" in " ".join(r).lower():
             header_idx = idx
@@ -35,14 +34,13 @@ def parse_tidal_matrix(rows: List[List[Any]], filename: str = "") -> Dict[str, A
 
     records = []
     all_levels = []
+    processed_days = {}
 
     for r in data_rows:
-        # First column must be day number (1..31)
         if not r or not r[0]:
             continue
             
         first_col = r[0].strip()
-        # Clean non-digit characters if any
         day_match = re.match(r"^(\d{1,2})", first_col)
         if not day_match:
             continue
@@ -51,15 +49,13 @@ def parse_tidal_matrix(rows: List[List[Any]], filename: str = "") -> Dict[str, A
         if day_num < 1 or day_num > 31:
             continue
 
-        # Extract values for hours 1 to 24
-        # Note: In PDF/table extraction, sometimes the first col contains day, next 24 columns are levels
         raw_values = r[1:25]
         
         # If columns were grouped in a single string, split by whitespace
         if len(raw_values) < 24 and len(r) == 2:
             raw_values = [v for v in r[1].split() if v.replace('-', '').isdigit()]
 
-        hourly_data = {}
+        day_records = []
         for h_idx in range(1, 25):
             val_idx = h_idx - 1
             val_num = 0
@@ -70,14 +66,26 @@ def parse_tidal_matrix(rows: List[List[Any]], filename: str = "") -> Dict[str, A
                 except (ValueError, TypeError):
                     val_num = 0
             
-            hourly_data[h_idx] = val_num
-            all_levels.append(val_num)
-            
-            records.append({
+            day_records.append({
                 "day": day_num,
                 "hour": h_idx,
                 "water_level": val_num
             })
+
+        # Check if this row has non-zero meaningful data
+        non_zero = sum(1 for x in day_records if x["water_level"] != 0)
+        
+        # Only save if day hasn't been recorded yet, or if this row has more meaningful data
+        if day_num not in processed_days or non_zero > processed_days[day_num]["non_zero"]:
+            processed_days[day_num] = {
+                "records": day_records,
+                "non_zero": non_zero
+            }
+
+    for d in sorted(processed_days.keys()):
+        for rec in processed_days[d]["records"]:
+            records.append(rec)
+            all_levels.append(rec["water_level"])
 
     if not records:
         return {"error": "Format tabel tidak sesuai format pasang surut BMKG (31 hari x 24 jam)."}
@@ -90,10 +98,10 @@ def parse_tidal_matrix(rows: List[List[Any]], filename: str = "") -> Dict[str, A
         "status": "success",
         "file_name": os.path.basename(filename),
         "total_records": len(records),
-        "days_detected": len(set(r["day"] for r in records)),
+        "days_detected": len(processed_days),
         "statistics": {
-            "hhw": hhw, # High High Water (Pasang Maksimum)
-            "llw": llw, # Low Low Water (Surut Minimum)
+            "hhw": hhw,
+            "llw": llw,
             "mean_sea_level_diff": avg_level,
             "total_hourly_points": len(records)
         },
@@ -135,7 +143,6 @@ def parse_file(file_path: str) -> Dict[str, Any]:
                         all_tables.extend(t)
             
             if not all_tables:
-                # Try text extraction fallback
                 return {"error": "Tabel pasang surut tidak terdeteksi dalam file PDF."}
                 
             return parse_tidal_matrix(all_tables, file_path)
