@@ -171,6 +171,45 @@ class AdminController extends Controller
         return redirect()->route('admin.data')->with('success', 'Data prediksi berhasil dihapus.');
     }
 
+    public function deleteAllPrediksi(Request $request)
+    {
+        $query = Prediction::query();
+        $desc = "semua data";
+
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->location_id);
+            $loc = Location::find($request->location_id);
+            if ($loc) {
+                $desc .= " lokasi {$loc->name}";
+            }
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('record_date', $request->date);
+            $desc .= " tanggal {$request->date}";
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+            $desc .= " status {$request->status}";
+        }
+
+        $count = $query->count();
+
+        if ($count === 0) {
+            return redirect()->route('admin.data')->with('warning', 'Tidak ada data prediksi yang dapat dihapus.');
+        }
+
+        $query->delete();
+
+        ActivityLog::record(
+            'delete_all_predictions',
+            "Menghapus {$count} data prediksi pasang surut ({$desc})."
+        );
+
+        return redirect()->route('admin.data')->with('success', "Berhasil menghapus {$count} data prediksi pasang surut.");
+    }
+
     public function storeDataUpload(Request $request)
     {
         $request->validate([
@@ -319,6 +358,28 @@ class AdminController extends Controller
         return back()->with('success', "Berkas '{$fileName}' berhasil dihapus.");
     }
 
+    public function deleteAllUploads()
+    {
+        $uploads = DataUpload::all();
+        $count = $uploads->count();
+
+        if ($count === 0) {
+            return back()->with('warning', 'Tidak ada riwayat unggahan berkas yang dapat dihapus.');
+        }
+
+        foreach ($uploads as $upload) {
+            if ($upload->file_path) {
+                Storage::disk('public')->delete($upload->file_path);
+            }
+            TidalData::where('upload_id', $upload->id)->delete();
+            $upload->delete();
+        }
+
+        ActivityLog::record('delete_all_uploads', "Menghapus semua ({$count}) riwayat upload berkas beserta data pasang surut terkait.");
+
+        return back()->with('success', "Berhasil menghapus seluruh ({$count}) riwayat berkas.");
+    }
+
     private function runPythonParser(string $filePath, string $locationCode, int $month, int $year): array
     {
         // 1. Coba panggil FastAPI microservice di port 8001 jika aktif
@@ -391,13 +452,38 @@ class AdminController extends Controller
             }
         }
 
+        $predictions = [];
+        $byDay = [];
+        foreach ($records as $rec) {
+            $byDay[$rec['day']][] = $rec;
+        }
+
+        foreach ($byDay as $d => $hours) {
+            $maxHour = collect($hours)->sortByDesc('water_level')->first();
+            $minHour = collect($hours)->sortBy('water_level')->first();
+            $highM = round(($maxHour['water_level'] ?? 0) / 100.0, 2);
+            $lowM = round(($minHour['water_level'] ?? 0) / 100.0, 2);
+            $status = $highM >= 2.0 ? 'Bahaya' : ($highM >= 1.5 ? 'Waspada' : 'Aman');
+
+            $predictions[] = [
+                'record_date' => sprintf('%04d-%02d-%02d', $year, $month, $d),
+                'day' => $d,
+                'high_tide_time' => sprintf('%02d.00 WIB', $maxHour['hour'] ?? 1),
+                'high_tide_level' => $highM,
+                'low_tide_time' => sprintf('%02d.00 WIB', $minHour['hour'] ?? 12),
+                'low_tide_level' => $lowM,
+                'status' => $status,
+            ];
+        }
+
         return [
             'status' => 'success',
             'data' => $records,
+            'predictions' => $predictions,
             'statistics' => [
-                'hhw' => max($levels),
-                'llw' => min($levels),
-                'mean_sea_level_diff' => round(array_sum($levels) / count($levels), 2),
+                'hhw' => !empty($levels) ? max($levels) : 0,
+                'llw' => !empty($levels) ? min($levels) : 0,
+                'mean_sea_level_diff' => !empty($levels) ? round(array_sum($levels) / count($levels), 2) : 0,
             ]
         ];
     }
@@ -633,12 +719,23 @@ class AdminController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => 'required|string|in:Informasi,Peringatan,info,warning,danger,success',
+            'type' => 'required|string',
             'location_id' => 'nullable|exists:locations,id',
             'threshold_value' => 'nullable|integer',
             'is_active' => 'nullable',
         ]);
 
+        $typeMap = [
+            'informasi' => 'info',
+            'info' => 'info',
+            'peringatan' => 'warning',
+            'warning' => 'warning',
+            'danger' => 'danger',
+            'bahaya' => 'danger',
+            'success' => 'success',
+            'sukses' => 'success',
+        ];
+        $validated['type'] = $typeMap[strtolower($validated['type'])] ?? 'info';
         $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : true;
         $validated['created_by'] = Auth::id();
 
@@ -656,12 +753,23 @@ class AdminController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => 'required|string|in:Informasi,Peringatan,info,warning,danger,success',
+            'type' => 'required|string',
             'location_id' => 'nullable|exists:locations,id',
             'threshold_value' => 'nullable|integer',
             'is_active' => 'nullable',
         ]);
 
+        $typeMap = [
+            'informasi' => 'info',
+            'info' => 'info',
+            'peringatan' => 'warning',
+            'warning' => 'warning',
+            'danger' => 'danger',
+            'bahaya' => 'danger',
+            'success' => 'success',
+            'sukses' => 'success',
+        ];
+        $validated['type'] = $typeMap[strtolower($validated['type'])] ?? 'info';
         $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : false;
 
         $notif->update($validated);

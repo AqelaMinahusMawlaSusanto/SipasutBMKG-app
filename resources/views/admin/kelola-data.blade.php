@@ -27,6 +27,12 @@
             <p style="font-size:13px;color:#64748B;margin:0;font-weight:500;">Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
+            @if($totalData > 0)
+                <button type="button" onclick="openModal('modalHapusSemua')"
+                    style="background:#FEF2F2;border:1.5px solid #FECACA;color:#DC2626;font-weight:700;font-size:13.5px;padding:12px 18px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(220,38,38,0.1);white-space:nowrap;">
+                    <span>🗑️</span> Hapus Semua Data
+                </button>
+            @endif
             <button onclick="openModal('modalUpload')"
                 style="background:#0284C7;color:#fff;font-weight:700;font-size:13.5px;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(2,132,199,0.25);white-space:nowrap;">
                 <span>📥</span> Import Berkas (Excel/CSV/PDF)
@@ -162,10 +168,16 @@
     <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;">
 
         {{-- Table Header Info --}}
-        <div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;">
-            <div>
+        <div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
                 <span style="font-size:15px;font-weight:700;color:#0F172A;">Daftar Prediksi Pasang Surut</span>
-                <span style="margin-left:10px;font-size:12px;color:#94A3B8;">({{ $predictions->total() }} data)</span>
+                <span style="font-size:12px;color:#94A3B8;">({{ $predictions->total() }} data)</span>
+                @if(request('location_id') || request('date') || request('status'))
+                    <button type="button" onclick="openModal('modalHapusFilter')"
+                        style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                        <span>🗑️</span> Hapus Hasil Filter Ini ({{ $predictions->total() }})
+                    </button>
+                @endif
             </div>
             <span style="font-size:12px;color:#94A3B8;">
                 Halaman {{ $predictions->currentPage() }} dari {{ $predictions->lastPage() }}
@@ -278,6 +290,15 @@
                 <span style="font-size:15px;font-weight:700;color:#0F172A;">📁 Riwayat Import Berkas Data</span>
                 <span style="margin-left:10px;font-size:12px;color:#94A3B8;">(5 Berkas Terbaru)</span>
             </div>
+            <form action="{{ route('admin.data.deleteUploadsAll') }}" method="POST"
+                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus SEMUA riwayat berkas import dan data pasang surut terkait?')">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                    style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                    <span>🗑️</span> Hapus Semua Berkas
+                </button>
+            </form>
         </div>
         <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:13px;color:#334155;">
@@ -342,7 +363,7 @@
         {{-- Header --}}
         <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#F0F9FF;">
             <div>
-                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;">📥 Import Data Pasang Surut</h3>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;"> Import Data Pasang Surut</h3>
                 <p style="margin:3px 0 0;font-size:12px;color:#64748B;">Upload file Excel (.xlsx, .xls), CSV, atau PDF untuk diekstrak otomatis oleh Python parser.</p>
             </div>
             <button onclick="closeModal('modalUpload')"
@@ -390,7 +411,7 @@
                     <input type="file" name="file_data" id="uploadFileInput" accept=".csv,.xlsx,.xls,.pdf" required
                            style="display:none;"
                            onchange="document.getElementById('uploadFileText').innerText = this.files[0] ? '📄 ' + this.files[0].name : 'Klik untuk memilih berkas (.csv, .xlsx, .pdf)'">
-                    <div style="font-size:32px;margin-bottom:6px;">📁</div>
+                    <div style="font-size:32px;margin-bottom:6px;"></div>
                     <div id="uploadFileText" style="font-size:13px;font-weight:700;color:#0284C7;">
                         Klik untuk memilih berkas (.csv, .xlsx, .pdf)
                     </div>
@@ -422,7 +443,7 @@
         {{-- Header --}}
         <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#F8FAFC;">
             <div>
-                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;">➕ Tambah Prediksi Pasang Surut</h3>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;"> Tambah Prediksi Pasang Surut</h3>
                 <p style="margin:3px 0 0;font-size:12px;color:#94A3B8;">Isi semua field di bawah ini untuk menambah data baru</p>
             </div>
             <button onclick="closeModal('modalTambah')"
@@ -616,6 +637,65 @@
     </div>
 </div>
 
+{{-- MODAL HAPUS SEMUA DATA --}}
+<div id="modalHapusSemua" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;animation:modalIn .15s ease-out;text-align:center;padding:28px 24px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px;">
+            ⚠️
+        </div>
+        <h3 style="font-size:18px;font-weight:800;color:#0F172A;margin:0 0 8px;">Hapus Semua Data Prediksi?</h3>
+        <p style="font-size:13px;color:#64748B;line-height:1.6;margin:0 0 24px;">
+            Tindakan ini akan menghapus <strong>seluruh {{ $totalData }} data prediksi pasang surut</strong> yang tersimpan di sistem. Tindakan ini tidak dapat dibatalkan.
+        </p>
+
+        <form action="{{ route('admin.data.destroyAll') }}" method="POST">
+            @csrf
+            @method('DELETE')
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button type="button" onclick="closeModal('modalHapusSemua')"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#fff;background:#DC2626;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,0.3);">
+                    Ya, Hapus Semua
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- MODAL HAPUS HASIL FILTER --}}
+<div id="modalHapusFilter" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;animation:modalIn .15s ease-out;text-align:center;padding:28px 24px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px;">
+            🗑️
+        </div>
+        <h3 style="font-size:18px;font-weight:800;color:#0F172A;margin:0 0 8px;">Hapus Data Sesuai Filter?</h3>
+        <p style="font-size:13px;color:#64748B;line-height:1.6;margin:0 0 24px;">
+            Tindakan ini akan menghapus <strong>{{ $predictions->total() }} data prediksi</strong> yang cocok dengan filter pencarian saat ini.
+        </p>
+
+        <form action="{{ route('admin.data.destroyAll') }}" method="POST">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="location_id" value="{{ request('location_id') }}">
+            <input type="hidden" name="date" value="{{ request('date') }}">
+            <input type="hidden" name="status" value="{{ request('status') }}">
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button type="button" onclick="closeModal('modalHapusFilter')"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#fff;background:#DC2626;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,0.3);">
+                    Ya, Hapus
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- ================================================================
      JAVASCRIPT
      ================================================================ --}}
@@ -623,14 +703,16 @@
     // --- Modal Helpers ---
     function openModal(id) {
         var el = document.getElementById(id);
+        if (!el) return;
         el.style.display = 'flex';
         setTimeout(function() { el.style.opacity = 1; }, 10);
     }
     function closeModal(id) {
-        document.getElementById(id).style.display = 'none';
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
     }
     // Tutup saat klik backdrop
-    ['modalUpload','modalTambah','modalEdit','modalDetail'].forEach(function(id) {
+    ['modalUpload','modalTambah','modalEdit','modalDetail','modalHapusSemua','modalHapusFilter'].forEach(function(id) {
         var modal = document.getElementById(id);
         if (modal) {
             modal.addEventListener('click', function(e) {
