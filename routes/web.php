@@ -16,6 +16,7 @@ Route::get('/', function () {
 })->name('dashboard');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+Route::get('/dashboard/realtime', [DashboardController::class, 'realtime'])->name('dashboard.realtime');
 Route::get('/user/dashboard', [DashboardController::class, 'index'])->name('user.dashboard');
 
 Route::get('/download-pasang-surut', [DownloadController::class, 'index'])->name('download.index');
@@ -44,8 +45,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/data', [AdminController::class, 'kelolaData'])->name('admin.data');
     Route::post('/data/prediksi', [AdminController::class, 'storePrediksi'])->name('admin.data.store');
     Route::put('/data/prediksi/{id}', [AdminController::class, 'updatePrediksi'])->name('admin.data.update');
+    Route::delete('/data/prediksi/destroy-all', [AdminController::class, 'deleteAllPrediksi'])->name('admin.data.destroyAll');
     Route::delete('/data/prediksi/{id}', [AdminController::class, 'deletePrediksi'])->name('admin.data.destroy');
     Route::post('/data/upload', [AdminController::class, 'storeDataUpload'])->name('admin.data.upload');
+    Route::delete('/data/upload/destroy-all', [AdminController::class, 'deleteAllUploads'])->name('admin.data.deleteUploadsAll');
     Route::delete('/data/upload/{id}', [AdminController::class, 'deleteDataUpload'])->name('admin.data.delete');
 
     // 2. Kelola Lokasi (CRUD Titik Monitoring)
@@ -62,6 +65,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // 4. Kelola Notif
     Route::get('/notifikasi', [AdminController::class, 'kelolaNotif'])->name('admin.notif');
     Route::post('/notifikasi', [AdminController::class, 'storeNotif'])->name('admin.notif.store');
+    Route::put('/notifikasi/{id}', [AdminController::class, 'updateNotif'])->name('admin.notif.update');
     Route::post('/notifikasi/{id}/toggle', [AdminController::class, 'toggleNotif'])->name('admin.notif.toggle');
     Route::delete('/notifikasi/{id}', [AdminController::class, 'deleteNotif'])->name('admin.notif.delete');
 
