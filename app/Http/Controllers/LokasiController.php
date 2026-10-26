@@ -21,6 +21,7 @@ class LokasiController extends Controller
         }
 
         $result = [];
+        $fallback = $this->fallbackLocations();
 
         foreach ($dbLocations as $loc) {
             $slug = DashboardController::slugifyLocation($loc);
@@ -73,14 +74,17 @@ class LokasiController extends Controller
                 'slug'          => $slug,
                 'name'          => $loc->name,
                 'kabupaten'     => $kabupaten,
-                'status'        => $status,
-                'status_label'  => $statusLabel,
+                'status'        => $fallback[$slug]['status'] ?? $status,
+                'status_label'  => $fallback[$slug]['status_label'] ?? $statusLabel,
                 'lat'           => (float) $loc->latitude,
                 'lng'           => (float) $loc->longitude,
                 'id_lokasi'     => 'LOC-' . ($loc->code ?: '00' . $loc->id),
                 'jenis_lokasi'  => $jenisLokasi,
-                'sensor_update' => $sensorUpdate,
+                'sensor_update' => $fallback[$slug]['sensor_update'] ?? $sensorUpdate,
                 'image'         => $image,
+                'areas'         => $fallback[$slug]['areas'] ?? [
+               ['name' => $loc->name, 'lat' => (float) $loc->latitude, 'lng' => (float) $loc->longitude],
+],
             ];
         }
 
