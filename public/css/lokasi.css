@@ -304,4 +304,9 @@
     .lokasi-search-row { flex-direction: column; }
     .lokasi-grid { grid-template-columns: 1fr; }
     #lokasiMap { height: 380px; }
+    
+}
+
+.detail-card .detail-card__kabupaten#detailMeliputi {
+    color: #000 !important;
 }
