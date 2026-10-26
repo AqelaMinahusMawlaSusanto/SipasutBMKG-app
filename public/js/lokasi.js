@@ -14,6 +14,35 @@ document.addEventListener('DOMContentLoaded', function () {
         rendah: '#2563eb',
     };
 
+    // ---------- Fungsi bantu ----------
+    function findLocation(slug) {
+        for (var i = 0; i < LOCATIONS.length; i++) {
+            if (LOCATIONS[i].slug === slug) return LOCATIONS[i];
+        }
+        return null;
+    }
+
+    // Daftar daerah satu lokasi. Kalau 'areas' kosong, pakai titik lokasinya sendiri.
+    function getAreas(loc) {
+        if (loc.areas && loc.areas.length) return loc.areas;
+        return [{ name: loc.name, lat: loc.lat, lng: loc.lng }];
+    }
+
+    function fitToLocation(loc, animate) {
+        var areas = getAreas(loc);
+        if (areas.length === 1) {
+            var a = areas[0];
+            if (animate) {
+                map.flyTo([a.lat, a.lng], 11, { duration: 0.6 });
+            } else {
+                map.setView([a.lat, a.lng], 11);
+            }
+            return;
+        }
+        var bounds = L.latLngBounds(areas.map(function (a) { return [a.lat, a.lng]; }));
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 11, animate: !!animate });
+    }
+
     // ---------- 1. Inisialisasi peta ----------
     var defaultLoc = findLocation(selectedSlug) || LOCATIONS[0];
 
@@ -26,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function () {
         attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
 
-    // ---------- 2. Buat marker untuk tiap lokasi ----------
-    var markers = {};
+    // ---------- 2. Marker: satu titik per daerah, satu warna per lokasi ----------
+    var markers = {}; // slug -> array marker
 
     function bigPinIcon(color) {
         var svg =
@@ -58,36 +87,34 @@ document.addEventListener('DOMContentLoaded', function () {
         var color = STATUS_COLOR[loc.status] || STATUS_COLOR.normal;
         var isSelected = loc.slug === selectedSlug;
 
-        var marker = L.marker([loc.lat, loc.lng], {
-            icon: isSelected ? bigPinIcon(color) : smallDotIcon(color),
-            title: loc.name,
-        }).addTo(map);
+        markers[loc.slug] = getAreas(loc).map(function (area) {
+            var marker = L.marker([area.lat, area.lng], {
+                icon: isSelected ? bigPinIcon(color) : smallDotIcon(color),
+                title: area.name,
+            }).addTo(map);
 
-        marker.bindTooltip(loc.name, { direction: 'top', offset: [0, isSelected ? -40 : -10] });
+            marker.bindTooltip(area.name, { direction: 'top', offset: [0, isSelected ? -40 : -10] });
 
-        marker.on('click', function () {
-            selectLocation(loc.slug, { fly: true });
+            marker.on('click', function () {
+                selectLocation(loc.slug, { fly: true });
+            });
+
+            return marker;
         });
-
-        markers[loc.slug] = marker;
     });
-
-    // ---------- 3. Fungsi bantu ----------
-    function findLocation(slug) {
-        for (var i = 0; i < LOCATIONS.length; i++) {
-            if (LOCATIONS[i].slug === slug) return LOCATIONS[i];
-        }
-        return null;
-    }
 
     function refreshMarkerIcons() {
         LOCATIONS.forEach(function (loc) {
             var color = STATUS_COLOR[loc.status] || STATUS_COLOR.normal;
             var isSelected = loc.slug === selectedSlug;
-            markers[loc.slug].setIcon(isSelected ? bigPinIcon(color) : smallDotIcon(color));
+            markers[loc.slug].forEach(function (marker) {
+                marker.setIcon(isSelected ? bigPinIcon(color) : smallDotIcon(color));
+                marker.getTooltip().options.offset = [0, isSelected ? -40 : -10];
+            });
         });
     }
 
+    // ---------- 3. Detail lokasi ----------
     function renderDetail(loc) {
         document.getElementById('detailImage').src = loc.image;
         document.getElementById('detailImage').alt = loc.name;
@@ -96,8 +123,16 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('detailKoordinat').textContent =
             loc.lat.toFixed(4) + ', ' + loc.lng.toFixed(4);
         document.getElementById('detailIdLokasi').textContent = loc.id_lokasi;
-        document.getElementById('detailJenisLokasi').textContent = loc.jenis_lokasi;
         document.getElementById('detailSensor').textContent = loc.sensor_update;
+
+        // "Meliputi: ..." dari daftar areas
+        var meliputi = document.getElementById('detailMeliputi');
+        if (meliputi) {
+            var names = (loc.areas || []).map(function (a) { return a.name; });
+            var tampil = names.length > 1 || (names.length === 1 && names[0] !== loc.name);
+            meliputi.textContent = tampil ? 'Meliputi: ' + names.join(', ') : '';
+            meliputi.hidden = !tampil;
+        }
 
         var badge = document.getElementById('detailBadge');
         badge.textContent = loc.status_label;
@@ -117,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.value = loc.name + ', ' + loc.kabupaten;
 
         if (opts.fly) {
-            map.flyTo([loc.lat, loc.lng], 11, { duration: 0.6 });
+            fitToLocation(loc, true);
         }
 
         closeDropdown();
@@ -164,14 +199,19 @@ document.addEventListener('DOMContentLoaded', function () {
         dropdown.hidden = true;
     }
 
+    // Pencarian juga mencocokkan nama daerah (Gresik, Sidoarjo, dll.)
     function filterLocations(keyword) {
         keyword = (keyword || '').toLowerCase().trim();
         if (!keyword) return LOCATIONS;
 
         return LOCATIONS.filter(function (loc) {
+            var inAreas = (loc.areas || []).some(function (a) {
+                return a.name.toLowerCase().indexOf(keyword) !== -1;
+            });
             return (
                 loc.name.toLowerCase().indexOf(keyword) !== -1 ||
-                loc.kabupaten.toLowerCase().indexOf(keyword) !== -1
+                loc.kabupaten.toLowerCase().indexOf(keyword) !== -1 ||
+                inAreas
             );
         });
     }
@@ -184,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function () {
         openDropdown(filterLocations(searchInput.value));
     });
 
-    // Klik di luar kolom pencarian -> tutup dropdown
     document.addEventListener('click', function (e) {
         if (!searchWrap.contains(e.target)) {
             closeDropdown();
@@ -207,9 +246,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ---------- 5. Toggle legenda "Kondisi Air" ----------
+    // ---------- 5. Legenda "Kondisi Air" (pojok kiri bawah) ----------
     var legendToggle = document.getElementById('legendToggle');
     var legendBox = document.getElementById('legendBox');
+
+    // Langsung terbuka saat halaman dimuat
+    legendBox.hidden = false;
+    legendToggle.setAttribute('aria-expanded', 'true');
 
     legendToggle.addEventListener('click', function () {
         var isOpen = !legendBox.hidden;
@@ -219,5 +262,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---------- 6. Tampilan awal ----------
     renderDetail(defaultLoc);
+    fitToLocation(defaultLoc, false);
     searchInput.value = defaultLoc.name + ', ' + defaultLoc.kabupaten;
 });
