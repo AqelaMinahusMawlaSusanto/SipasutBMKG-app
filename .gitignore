@@ -33,10 +33,10 @@ __pycache__/
 *.pyc
 
 # Views to be developed by teammate
-/resources/views/admin/kelola-lokasi.blade.php
-/resources/views/admin/kelola-profil.blade.php
-/resources/views/admin/kelola-notif.blade.php
-/resources/views/admin/login-aktivitas.blade.php
-/resources/views/user/kondisi-pasang-surut.blade.php
-/resources/views/user/lokasi-monitoring.blade.php
-/resources/views/user/kalender.blade.php
+# /resources/views/admin/kelola-lokasi.blade.php
+# /resources/views/admin/kelola-profil.blade.php
+# /resources/views/admin/kelola-notif.blade.php
+# /resources/views/admin/login-aktivitas.blade.php
+# /resources/views/user/kondisi-pasang-surut.blade.php
+# /resources/views/user/lokasi-monitoring.blade.php
+# /resources/views/user/kalender.blade.php

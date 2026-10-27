@@ -98,16 +98,13 @@
 
                 <p class="detail-card__kabupaten" id="detailKabupaten">-</p>
                 <p class="detail-card__koordinat">Koordinat: <span id="detailKoordinat">-</span></p>
-
+                <p class="detail-card__kabupaten" id="detailMeliputi"></p>
+                
                 <h4>Informasi Lainnya</h4>
 
                 <div class="detail-card__row">
                     <span>ID Lokasi</span>
                     <strong id="detailIdLokasi">-</strong>
-                </div>
-                <div class="detail-card__row">
-                    <span>Jenis Lokasi</span>
-                    <strong id="detailJenisLokasi">-</strong>
                 </div>
                 <div class="detail-card__row">
                     <span>Sensor Terakhir Update</span>
