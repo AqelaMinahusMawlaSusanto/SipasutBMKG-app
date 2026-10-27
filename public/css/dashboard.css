@@ -125,33 +125,44 @@ ul { list-style: none; margin: 0; padding: 0; }
 .location-select__trigger span#locationLabel { flex: 1; text-align: left; }
 .location-select__chevron { color: var(--slate); transition: transform .15s ease; }
 
-.location-select.is-open .location-select__chevron { transform: rotate(180deg); }
+.location-select {
+    position: relative;
+    z-index: 1000;
+}
 
 .location-select__menu {
     display: none;
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + 8px);
     left: 0;
-    right: 0;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, .2);
+    min-width: 100%;
+    margin: 0;
     padding: 6px;
-    z-index: 20;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    z-index: 1001;
 }
 
-.location-select.is-open .location-select__menu { display: block; }
+.location-select__menu.is-open {
+    display: block;
+}
 
 .location-select__menu li a {
     display: block;
     padding: 10px 12px;
+    color: #1e293b;
+    text-decoration: none;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ink);
+    white-space: nowrap;
 }
 
-.location-select__menu li a:hover { background: var(--blue-light); }
+.location-select__menu a:hover {
+    background: #eff6ff;
+    color: #2563eb;
+}
 
 /* ---------- Stat cards ---------- */
 .stat-cards {

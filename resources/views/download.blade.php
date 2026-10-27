@@ -93,6 +93,7 @@
             <div class="chart-card__canvas-wrap">
                 <canvas id="tideDetailChart" height="280"></canvas>
             </div>
+            <p class="chart-card__info" id="chartInfo"></p>
             <p class="chart-card__footnote chart-card__footnote--muted">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 Waktu dalam WIB (UTC+7)
@@ -171,6 +172,7 @@
 
     <script>
         window.MAP_LOCATIONS = @json($locations);
+        window.TIDE_CHART = @json($chart);
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ asset('js/download.js') }}"></script>

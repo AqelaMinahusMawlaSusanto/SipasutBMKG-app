@@ -193,3 +193,5 @@
 @media (max-width: 560px) {
     .filter-grid { grid-template-columns: 1fr; }
 }
+
+.chart-card__info { margin: 8px 0 0; font-size: 12.5px; color: var(--slate); }
