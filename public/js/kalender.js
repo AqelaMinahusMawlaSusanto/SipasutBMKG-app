@@ -8,8 +8,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var today = new Date();
     var viewYear  = today.getFullYear();
     var viewMonth = today.getMonth(); // 0-11
-    var selectedDate = null;          // Date object
+    var selectedDate = null;
     var selectedLocation = null;      // { slug, name }
+    var latestRequest = null;
 
     // ---------- Elemen ----------
     var selectControl = document.getElementById('kalenderSelectControl');
@@ -131,23 +132,18 @@ document.addEventListener('DOMContentLoaded', function () {
         daysContainer.innerHTML = '';
 
         var firstDay = new Date(viewYear, viewMonth, 1);
-        // Senin = 0 ... Minggu = 6
-        var startOffset = (firstDay.getDay() + 6) % 7;
+        var startOffset = (firstDay.getDay() + 6) % 7; // Senin = 0
 
         var totalDaysThisMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
         var totalDaysPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
 
         var cells = [];
-
-        // Tanggal sisa bulan sebelumnya (abu-abu)
         for (var i = startOffset; i > 0; i--) {
             cells.push({ day: totalDaysPrevMonth - i + 1, outside: true });
         }
-        // Tanggal bulan ini
         for (var d = 1; d <= totalDaysThisMonth; d++) {
             cells.push({ day: d, outside: false });
         }
-        // Genapkan ke kelipatan 7 dengan tanggal bulan berikutnya
         var nextDay = 1;
         while (cells.length % 7 !== 0) {
             cells.push({ day: nextDay++, outside: true });
@@ -177,89 +173,86 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ---------- Data pasang/surut dummy (deterministik per lokasi+tanggal) ----------
-    function hashSeed(str) {
-        var hash = 0;
-        for (var i = 0; i < str.length; i++) {
-            hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-        }
-        return hash;
-    }
-
+    // ---------- Data pasang/surut dari admin (tabel database) ----------
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-    function computeTide(slug, dateObj) {
-        var dateKey = dateObj.getFullYear() + '-' + pad(dateObj.getMonth() + 1) + '-' + pad(dateObj.getDate());
-        var seed = hashSeed(slug + '|' + dateKey);
-
-        var pasangHour   = 8 + (seed % 5);            // 08 - 12
-        var pasangMinute = [0, 15, 30, 45][seed % 4];
-        var pasangTinggi = (1.2 + ((seed >> 3) % 100) / 100).toFixed(2); // 1.20 - 2.19
-
-        var surutSeed    = seed >> 5;
-        var surutHour    = 14 + (surutSeed % 4);       // 14 - 17
-        var surutMinute  = [0, 15, 30, 45][surutSeed % 4];
-        var surutTinggi  = (0.2 + ((surutSeed >> 3) % 70) / 100).toFixed(2); // 0.20 - 0.89
-
-        return {
-            pasang: {
-                waktu: pad(pasangHour) + '.' + pad(pasangMinute) + ' WIB',
-                tinggi: pasangTinggi.replace('.', ',') + ' CM',
-                status: parseFloat(pasangTinggi) >= 2.0 ? 'Waspada' : 'Aman',
-            },
-            surut: {
-                waktu: pad(surutHour) + '.' + pad(surutMinute) + ' WIB',
-                tinggi: surutTinggi.replace('.', ',') + ' CM',
-                status: parseFloat(surutTinggi) <= 0.25 ? 'Waspada' : 'Aman',
-            },
-        };
+    function dateKey(d) {
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     }
 
-    function tideFieldHtml(label, value, status) {
-        var statusHtml = status
-            ? '<span class="tide-status' + (status === 'Waspada' ? ' is-waspada' : '') + '">' + status + '</span>'
-            : '';
+    // Tanpa cache: tiap pilih tanggal/lokasi, data diambil ulang,
+    // jadi perubahan dari admin langsung ikut tampil.
+    function fetchTide(slug, year, month) {
+        var url = window.KALENDER_DATA_URL + '?slug=' + encodeURIComponent(slug) +
+                  '&tahun=' + year + '&bulan=' + month;
+        return fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(function (r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            });
+    }
+
+    function tideFieldHtml(label, value) {
         return '<div class="tide-field">' +
-                    '<span class="tide-field__label">' + label + '</span>' +
-                    '<span class="tide-field__value">' + value + '</span>' +
-               '</div>' + statusHtml;
+                   '<span class="tide-field__label">' + label + '</span>' +
+                   '<span class="tide-field__value">' + value + '</span>' +
+               '</div>';
+    }
+
+    function setBodies(text, isEmpty) {
+        pasangBody.innerHTML = text;
+        surutBody.innerHTML = text;
+        pasangBody.classList.toggle('is-empty', isEmpty);
+        surutBody.classList.toggle('is-empty', isEmpty);
     }
 
     function renderDetail() {
         if (!selectedLocation || !selectedDate) {
             detailDateLabel.hidden = true;
-            pasangBody.innerHTML = '';
-            surutBody.innerHTML = '';
-            pasangBody.classList.add('is-empty');
-            surutBody.classList.add('is-empty');
+            setBodies('', true);
             return;
         }
-
-        var tide = computeTide(selectedLocation.slug, selectedDate);
 
         detailDateLabel.hidden = false;
         detailDateLabel.textContent = HARI[selectedDate.getDay()] + ', ' +
             selectedDate.getDate() + ' ' + BULAN[selectedDate.getMonth()] + ' ' + selectedDate.getFullYear();
 
-        pasangBody.classList.remove('is-empty');
-        surutBody.classList.remove('is-empty');
+        var requestKey = selectedLocation.slug + '|' + dateKey(selectedDate);
+        latestRequest = requestKey;
+        setBodies('Memuat data...', true);
 
-        pasangBody.innerHTML =
-            tideFieldHtml('&#128337; Waktu', tide.pasang.waktu) +
-            tideFieldHtml('&#127754; Tinggi', tide.pasang.tinggi) +
-            '<div class="tide-field"><span class="tide-field__label">Status</span>' +
-            '<span class="tide-status' + (tide.pasang.status === 'Waspada' ? ' is-waspada' : '') + '">' + tide.pasang.status + '</span></div>';
+        fetchTide(selectedLocation.slug, selectedDate.getFullYear(), selectedDate.getMonth() + 1)
+            .then(function (data) {
+                if (latestRequest !== requestKey) return; // pilihan sudah berganti
+                var tide = data[dateKey(selectedDate)];
 
-        surutBody.innerHTML =
-            tideFieldHtml('&#128337; Waktu', tide.surut.waktu) +
-            tideFieldHtml('&#127754; Tinggi', tide.surut.tinggi) +
-            '<div class="tide-field"><span class="tide-field__label">Status</span>' +
-            '<span class="tide-status' + (tide.surut.status === 'Waspada' ? ' is-waspada' : '') + '">' + tide.surut.status + '</span></div>';
+                if (!tide) {
+                    setBodies('Belum ada data untuk tanggal ini.', true);
+                    return;
+                }
+
+                var statusClass = tide.status === 'Aman' ? '' : ' is-waspada';
+
+                pasangBody.classList.remove('is-empty');
+                surutBody.classList.remove('is-empty');
+
+                pasangBody.innerHTML =
+                    tideFieldHtml('&#128337; Waktu', tide.jam_pasang) +
+                    tideFieldHtml('&#127754; Tinggi', tide.tinggi_pasang) +
+                    '<div class="tide-field"><span class="tide-field__label">Status</span>' +
+                    '<span class="tide-status' + statusClass + '">' + tide.status + '</span></div>';
+
+                surutBody.innerHTML =
+                    tideFieldHtml('&#128337; Waktu', tide.jam_surut) +
+                    tideFieldHtml('&#127754; Tinggi', tide.tinggi_surut);
+            })
+            .catch(function () {
+                if (latestRequest !== requestKey) return;
+                setBodies('Gagal memuat data.', true);
+            });
     }
 
     // ---------- Init ----------
-    // Tanggal & lokasi belum dipilih otomatis; kartu PASANG/SURUT kosong
-    // sampai user memilih lokasi lalu mengklik tanggal di kalender.
     renderCalendar();
     renderDetail();
 });
