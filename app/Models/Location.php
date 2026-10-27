@@ -39,4 +39,9 @@ class Location extends Model
     {
         return $this->hasMany(Notification::class);
     }
+
+    public function predictions()
+    {
+        return $this->hasMany(Prediction::class);
+    }
 }

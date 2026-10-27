@@ -41,6 +41,17 @@
                class="navbar__link {{ request()->routeIs('kalender.index') ? 'is-active' : '' }}">
                Kalender
             </a>
+            @auth
+                @if(Auth::user()->hasRole('admin') || Auth::user()->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="navbar__link" style="color: #0284c7; font-weight: 600;">
+                        Panel Admin
+                    </a>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="navbar__link" style="color: #0284c7; font-weight: 600;">
+                    Login Admin
+                </a>
+            @endauth
         </nav>
     </header>
 

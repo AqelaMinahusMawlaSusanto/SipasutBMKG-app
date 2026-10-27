@@ -1,165 +1,272 @@
-@extends('layouts.admin')
+<x-app-layout>
+<div style="background-color:#F8FAFC;min-height:100vh;padding:32px 40px;font-family:'Poppins',sans-serif;">
 
-@section('title', 'Kelola Data')
+    {{-- ===== FLASH ALERTS ===== --}}
+    @if(session('success'))
+        <div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:13px 18px;border-radius:12px;margin-bottom:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;">
+            ✅ {{ session('success') }}
+        </div>
+    @endif
+    @if(session('warning'))
+        <div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:13px 18px;border-radius:12px;margin-bottom:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;">
+            ⚠️ {{ session('warning') }}
+        </div>
+    @endif
+    @if($errors->any())
+        <div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:13px 18px;border-radius:12px;margin-bottom:20px;font-size:13px;">
+            @foreach($errors->all() as $err)
+                <div style="margin-bottom:2px;">❌ {{ $err }}</div>
+            @endforeach
+        </div>
+    @endif
 
-@section('content')
-<div class="space-y-6">
-
-    <!-- Page Header -->
-    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    {{-- ===== PAGE HEADER ===== --}}
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;">
         <div>
-            <span class="text-xs font-bold text-sky-600 uppercase tracking-wider">Modul Input & Parser Data</span>
-            <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Kelola Data Pasang Surut</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Unggah data tabel matriks BMKG (Excel/CSV/PDF) untuk diproses otomatis oleh Python engine.</p>
+            <h1 style="font-size:26px;font-weight:800;color:#0F172A;margin:0 0 4px;">Kelola Prediksi Pasang Surut</h1>
+            <p style="font-size:13px;color:#64748B;margin:0;font-weight:500;">Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
         </div>
-
-        <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Python Engine Ready
-            </span>
-        </div>
-    </div>
-
-    <!-- Upload Multi-File Card -->
-    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-        <h2 class="text-base font-bold text-slate-900 mb-1">Unggah Berkas Baru (Multi-File)</h2>
-        <p class="text-xs text-slate-500 mb-5">Format yang didukung: <strong>.xlsx, .xls, .csv, .pdf</strong> (Format tabel matriks 31 hari x 24 jam BMKG Maritim).</p>
-
-        <form action="{{ route('admin.data.upload') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-            @csrf
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Lokasi Stasiun -->
-                <div>
-                    <label for="location_id" class="block text-xs font-bold text-slate-700 mb-1.5">Titik Lokasi Pantai</label>
-                    <select name="location_id" id="location_id" required
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                        @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}" {{ old('location_id') == $loc->id ? 'selected' : '' }}>
-                                {{ $loc->name }} ({{ $loc->code }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Bulan Periode -->
-                <div>
-                    <label for="period_month" class="block text-xs font-bold text-slate-700 mb-1.5">Bulan Data</label>
-                    <select name="period_month" id="period_month" required
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                        @for($m = 1; $m <= 12; $m++)
-                            <option value="{{ $m }}" {{ old('period_month', 7) == $m ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::create(2026, $m, 1)->translatedFormat('F') }}
-                            </option>
-                        @endfor
-                    </select>
-                </div>
-
-                <!-- Tahun Periode -->
-                <div>
-                    <label for="period_year" class="block text-xs font-bold text-slate-700 mb-1.5">Tahun Data</label>
-                    <input type="number" name="period_year" id="period_year" value="{{ old('period_year', 2026) }}" required min="2020" max="2035"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:ring-2 focus:ring-sky-500 focus:outline-none">
-                </div>
-            </div>
-
-            <!-- File Upload Dropzone -->
-            <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-sky-400 hover:bg-sky-50/20 transition cursor-pointer">
-                <input type="file" name="files[]" id="files" multiple required accept=".xlsx,.xls,.csv,.pdf"
-                       class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-700 cursor-pointer">
-                <p class="text-[11px] text-slate-400 mt-2">Anda dapat memilih satu atau banyak file sekaligus (CTRL + Klik atau Drag & Drop).</p>
-            </div>
-
-            <div class="flex justify-end pt-2">
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md shadow-sky-600/20 transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    <span>Mulai Proses & Ekstrak Data Python</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+            @if($totalData > 0)
+                <button type="button" onclick="openModal('modalHapusSemua')"
+                    style="background:#FEF2F2;border:1.5px solid #FECACA;color:#DC2626;font-weight:700;font-size:13.5px;padding:12px 18px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(220,38,38,0.1);white-space:nowrap;">
+                    <span>🗑️</span> Hapus Semua Data
                 </button>
-            </div>
-        </form>
+            @endif
+            <button onclick="openModal('modalUpload')"
+                style="background:#0284C7;color:#fff;font-weight:700;font-size:13.5px;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(2,132,199,0.25);white-space:nowrap;">
+                <span>📥</span> Import Berkas (Excel/CSV/PDF)
+            </button>
+            <button onclick="openModal('modalTambah')"
+                style="background:#1D61E7;color:#fff;font-weight:700;font-size:13.5px;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(29,97,231,0.25);white-space:nowrap;">
+                <span style="font-size:16px;line-height:1;font-weight:800;">+</span> Tambah Manual
+            </button>
+        </div>
     </div>
 
-    <!-- Riwayat Upload Data Table -->
-    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-                <h2 class="text-base font-bold text-slate-900">Riwayat Berkas yang Diunggah</h2>
-                <p class="text-xs text-slate-500">Daftar file pasang surut yang telah diproses ke dalam database</p>
-            </div>
+    {{-- ===== 4 STAT CARDS ===== --}}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
 
-            <!-- Filter Lokasi -->
-            <form method="GET" action="{{ route('admin.data') }}">
-                <select name="location_id" onchange="this.form.submit()"
-                        class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50">
-                    <option value="">Semua Lokasi</option>
+        {{-- Card 1: Total Data --}}
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="width:52px;height:52px;background:#E0ECFF;color:#1D61E7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">Total Data</div>
+                <div style="font-size:30px;font-weight:900;color:#0F172A;line-height:1.1;">{{ $totalData }}</div>
+                <div style="font-size:12px;color:#64748B;font-weight:600;">Data Pasang Surut</div>
+            </div>
+        </div>
+
+        {{-- Card 2: Lokasi Monitoring --}}
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="width:52px;height:52px;background:#E0ECFF;color:#1D61E7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">Lokasi Monitoring</div>
+                <div style="font-size:30px;font-weight:900;color:#0F172A;line-height:1.1;">{{ $totalLokasi }}</div>
+                <div style="font-size:12px;color:#64748B;font-weight:600;">Lokasi Aktif</div>
+            </div>
+        </div>
+
+        {{-- Card 3: Data Hari Ini --}}
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="width:52px;height:52px;background:#E0ECFF;color:#1D61E7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">Data Hari Ini</div>
+                <div style="font-size:30px;font-weight:900;color:#0F172A;line-height:1.1;">{{ $dataHariIni }}</div>
+                <div style="font-size:12px;color:#64748B;font-weight:600;">Data Terbaru</div>
+            </div>
+        </div>
+
+        {{-- Card 4: Update Terakhir --}}
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="width:52px;height:52px;background:#E0ECFF;color:#1D61E7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">Update Terakhir</div>
+                <div style="font-size:22px;font-weight:900;color:#0F172A;line-height:1.2;">{{ $updateTerakhir }}</div>
+                <div style="font-size:12px;color:#64748B;font-weight:600;">Data Terbaru</div>
+            </div>
+        </div>
+
+    </div>
+
+    {{-- ===== FILTER BAR ===== --}}
+    <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <form action="{{ route('admin.data') }}" method="GET"
+              style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;">
+
+            {{-- Lokasi --}}
+            <div style="flex:1;min-width:150px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Cari Lokasi</label>
+                <select name="location_id"
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:10px 12px;font-size:13px;color:#334155;background:#fff;outline:none;">
+                    <option value="">Pilih Lokasi</option>
                     @foreach($locations as $loc)
                         <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>
                             {{ $loc->name }}
                         </option>
                     @endforeach
                 </select>
-            </form>
+            </div>
+
+            {{-- Tanggal --}}
+            <div style="flex:1;min-width:150px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tanggal</label>
+                <input type="date" name="date" value="{{ request('date') }}"
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:10px 12px;font-size:13px;color:#334155;background:#fff;outline:none;">
+            </div>
+
+            {{-- Status --}}
+            <div style="flex:1;min-width:150px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Status Kondisi</label>
+                <select name="status"
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:10px 12px;font-size:13px;color:#334155;background:#fff;outline:none;">
+                    <option value="">Semua Kondisi</option>
+                    <option value="Aman" {{ request('status') === 'Aman' ? 'selected' : '' }}>Aman</option>
+                    <option value="Waspada" {{ request('status') === 'Waspada' ? 'selected' : '' }}>Waspada</option>
+                    <option value="Bahaya" {{ request('status') === 'Bahaya' ? 'selected' : '' }}>Bahaya</option>
+                </select>
+            </div>
+
+            {{-- Urutkan --}}
+            <div style="flex:1;min-width:140px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Urutkan</label>
+                <select name="sort"
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:10px 12px;font-size:13px;color:#334155;background:#fff;outline:none;">
+                    <option value="terlama" {{ request('sort', 'terlama') === 'terlama' ? 'selected' : '' }}>Tanggal Awal (1 - 31)</option>
+                    <option value="terbaru" {{ request('sort') === 'terbaru' ? 'selected' : '' }}>Tanggal Terbaru</option>
+                    <option value="lokasi" {{ request('sort') === 'lokasi' ? 'selected' : '' }}>Lokasi A-Z</option>
+                </select>
+            </div>
+
+            {{-- Tombol Cari --}}
+            <div>
+                <button type="submit"
+                    style="border:1.5px solid #93C5FD;background:#EFF6FF;color:#1D4ED8;font-weight:700;font-size:13px;padding:10px 20px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                    🔍 Cari
+                </button>
+            </div>
+
+            {{-- Tombol Reset --}}
+            <div>
+                <a href="{{ route('admin.data') }}"
+                    style="border:1.5px solid #CBD5E1;background:#F8FAFC;color:#64748B;font-weight:700;font-size:13px;padding:10px 20px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;">
+                    ↺ Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {{-- ===== TABEL PREDIKSI ===== --}}
+    <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;">
+
+        {{-- Table Header Info --}}
+        <div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:15px;font-weight:700;color:#0F172A;">Daftar Prediksi Pasang Surut</span>
+                <span style="font-size:12px;color:#94A3B8;">({{ $predictions->total() }} data)</span>
+                @if(request('location_id') || request('date') || request('status'))
+                    <button type="button" onclick="openModal('modalHapusFilter')"
+                        style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                        <span>🗑️</span> Hapus Hasil Filter Ini ({{ $predictions->total() }})
+                    </button>
+                @endif
+            </div>
+            <span style="font-size:12px;color:#94A3B8;">
+                Halaman {{ $predictions->currentPage() }} dari {{ $predictions->lastPage() }}
+            </span>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
-                    <tr>
-                        <th class="py-3 px-3">Nama Berkas</th>
-                        <th class="py-3 px-3">Lokasi Stasiun</th>
-                        <th class="py-3 px-3">Periode</th>
-                        <th class="py-3 px-3">Total Data</th>
-                        <th class="py-3 px-3">Status</th>
-                        <th class="py-3 px-3">Waktu Unggah</th>
-                        <th class="py-3 px-3 text-right">Aksi</th>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13.5px;font-weight:500;color:#334155;">
+                <thead>
+                    <tr style="background:#D7E5F9;font-size:12.5px;font-weight:700;color:#0F172A;">
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">No</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Lokasi</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Tanggal</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Jam Pasang</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Tinggi Pasang</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Jam Surut</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Tinggi Surut</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Status</th>
+                        <th style="padding:14px 16px;text-align:left;white-space:nowrap;">Update</th>
+                        <th style="padding:14px 16px;text-align:center;white-space:nowrap;">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse($uploads as $up)
-                        <tr class="hover:bg-slate-50/80 transition">
-                            <td class="py-3 px-3 font-semibold text-slate-900">
-                                <div class="flex items-center gap-2">
-                                    <span class="uppercase font-bold text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                                        {{ $up->file_type }}
-                                    </span>
-                                    <span class="truncate max-w-xs">{{ $up->file_name }}</span>
+                <tbody>
+                    @forelse($predictions as $i => $p)
+                        @php
+                            $rowNum = ($predictions->currentPage() - 1) * $predictions->perPage() + $i + 1;
+                            $statusColor = match($p->status) {
+                                'Aman'    => ['bg' => '#ECFDF5', 'color' => '#059669', 'border' => '#A7F3D0'],
+                                'Waspada' => ['bg' => '#FFFBEB', 'color' => '#D97706', 'border' => '#FDE68A'],
+                                'Bahaya'  => ['bg' => '#FEF2F2', 'color' => '#DC2626', 'border' => '#FECACA'],
+                                default   => ['bg' => '#F1F5F9', 'color' => '#64748B', 'border' => '#CBD5E1'],
+                            };
+                        @endphp
+                        <tr style="border-top:1px solid #F1F5F9;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:14px 16px;color:#94A3B8;font-size:13px;">{{ $rowNum }}</td>
+                            <td style="padding:14px 16px;font-weight:700;color:#0F172A;">{{ $p->location->name ?? '-' }}</td>
+                            <td style="padding:14px 16px;">{{ $p->record_date->format('d M Y') }}</td>
+                            <td style="padding:14px 16px;">{{ $p->high_tide_time }}</td>
+                            <td style="padding:14px 16px;font-weight:700;color:#1D61E7;">{{ number_format($p->high_tide_level, 2) }} m</td>
+                            <td style="padding:14px 16px;">{{ $p->low_tide_time }}</td>
+                            <td style="padding:14px 16px;font-weight:700;color:#7C3AED;">{{ number_format($p->low_tide_level, 2) }} m</td>
+                            <td style="padding:14px 16px;">
+                                <span style="background:{{ $statusColor['bg'] }};color:{{ $statusColor['color'] }};border:1px solid {{ $statusColor['border'] }};padding:4px 12px;border-radius:9999px;font-size:11.5px;font-weight:700;">
+                                    {{ $p->status }}
+                                </span>
+                            </td>
+                            <td style="padding:14px 16px;color:#94A3B8;font-size:12px;">{{ $p->updated_at->format('H.i \W\I\B') }}</td>
+                            <td style="padding:14px 16px;text-align:center;">
+                                <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    {{-- Detail --}}
+                                    <button type="button" title="Detail" class="btn-detail"
+                                        style="border:1px solid #93C5FD;background:#EFF6FF;color:#1D4ED8;padding:6px 9px;border-radius:8px;cursor:pointer;font-size:14px;line-height:1;"
+                                        data-lokasi="{{ $p->location->name ?? '-' }}"
+                                        data-tanggal="{{ $p->record_date->format('d M Y') }}"
+                                        data-high-time="{{ $p->high_tide_time }}"
+                                        data-high-level="{{ number_format($p->high_tide_level, 2) }}"
+                                        data-low-time="{{ $p->low_tide_time }}"
+                                        data-low-level="{{ number_format($p->low_tide_level, 2) }}"
+                                        data-status="{{ $p->status }}"
+                                        data-update="{{ $p->updated_at->format('d/m/Y H.i') }} WIB">👁️</button>
+                                    {{-- Edit --}}
+                                    <button type="button" title="Edit" class="btn-edit"
+                                        style="border:1px solid #FDE68A;background:#FFFBEB;color:#D97706;padding:6px 9px;border-radius:8px;cursor:pointer;font-size:14px;line-height:1;"
+                                        data-id="{{ $p->id }}"
+                                        data-location-id="{{ $p->location_id }}"
+                                        data-record-date="{{ $p->record_date->format('Y-m-d') }}"
+                                        data-high-tide-time="{{ $p->high_tide_time }}"
+                                        data-high-tide-level="{{ $p->high_tide_level }}"
+                                        data-low-tide-time="{{ $p->low_tide_time }}"
+                                        data-low-tide-level="{{ $p->low_tide_level }}"
+                                        data-status="{{ $p->status }}">✏️</button>
+                                    {{-- Hapus --}}
+                                    <form action="{{ route('admin.data.destroy', $p->id) }}" method="POST"
+                                          class="form-delete"
+                                          data-info="{{ $p->location->name ?? 'prediksi ini' }} tgl {{ $p->record_date->format('d/m/Y') }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" title="Hapus"
+                                            style="border:1px solid #FECACA;background:#FEF2F2;color:#DC2626;padding:6px 9px;border-radius:8px;cursor:pointer;font-size:14px;line-height:1;">🗑️</button>
+                                    </form>
                                 </div>
-                            </td>
-                            <td class="py-3 px-3 text-slate-700 font-medium">
-                                {{ $up->location->name ?? '-' }}
-                            </td>
-                            <td class="py-3 px-3 font-medium text-slate-600">
-                                {{ \Carbon\Carbon::create(2026, $up->period_month, 1)->translatedFormat('F') }} {{ $up->period_year }}
-                            </td>
-                            <td class="py-3 px-3 font-mono font-bold text-slate-700">
-                                {{ number_format($up->total_records) }} titik
-                            </td>
-                            <td class="py-3 px-3">
-                                @if($up->status === 'completed')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Selesai</span>
-                                @elseif($up->status === 'processing')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">Memproses</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">Gagal</span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-3 text-slate-500 text-[11px]">
-                                {{ $up->created_at->format('d/m/Y H:i') }}
-                            </td>
-                            <td class="py-3 px-3 text-right">
-                                <form action="{{ route('admin.data.delete', $up->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition" title="Hapus">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </form>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400">
-                                Belum ada riwayat berkas yang diunggah. Silakan unggah berkas data baru di atas.
+                            <td colspan="10" style="padding:48px 20px;text-align:center;color:#94A3B8;font-size:14px;">
+                                <div style="margin-bottom:8px;font-size:36px;">🌊</div>
+                                Tidak ada data prediksi ditemukan.<br>
+                                <span style="font-size:12px;">Klik <strong>+ Tambah Prediksi</strong> untuk menambahkan data baru.</span>
                             </td>
                         </tr>
                     @endforelse
@@ -167,10 +274,541 @@
             </table>
         </div>
 
-        <div class="mt-4">
-            {{ $uploads->links() }}
-        </div>
+        {{-- Pagination --}}
+        @if($predictions->hasPages())
+            <div style="padding:14px 20px;border-top:1px solid #F1F5F9;">
+                {{ $predictions->links() }}
+            </div>
+        @endif
     </div>
 
+    {{-- ===== RIWAYAT UPLOAD BERKAS DATA ===== --}}
+    @if(isset($uploads) && $uploads->count() > 0)
+    <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;">
+        <div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <span style="font-size:15px;font-weight:700;color:#0F172A;">📁 Riwayat Import Berkas Data</span>
+                <span style="margin-left:10px;font-size:12px;color:#94A3B8;">(5 Berkas Terbaru)</span>
+            </div>
+            <form action="{{ route('admin.data.deleteUploadsAll') }}" method="POST"
+                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus SEMUA riwayat berkas import dan data pasang surut terkait?')">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                    style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                    <span>🗑️</span> Hapus Semua Berkas
+                </button>
+            </form>
+        </div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;color:#334155;">
+                <thead>
+                    <tr style="background:#F8FAFC;font-size:12px;font-weight:700;color:#64748B;border-bottom:1px solid #E2E8F0;">
+                        <th style="padding:12px 16px;text-align:left;">Nama Berkas</th>
+                        <th style="padding:12px 16px;text-align:left;">Lokasi</th>
+                        <th style="padding:12px 16px;text-align:left;">Periode</th>
+                        <th style="padding:12px 16px;text-align:left;">Total Data</th>
+                        <th style="padding:12px 16px;text-align:left;">Status</th>
+                        <th style="padding:12px 16px;text-align:left;">Waktu Unggah</th>
+                        <th style="padding:12px 16px;text-align:center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($uploads as $up)
+                        <tr style="border-top:1px solid #F1F5F9;">
+                            <td style="padding:12px 16px;">
+                                <span style="text-transform:uppercase;font-size:10.5px;font-weight:700;background:#E0ECFF;color:#1D61E7;padding:3px 7px;border-radius:6px;margin-right:6px;">
+                                    {{ $up->file_type }}
+                                </span>
+                                <strong style="color:#0F172A;">{{ $up->file_name }}</strong>
+                            </td>
+                            <td style="padding:12px 16px;">{{ $up->location->name ?? '-' }}</td>
+                            <td style="padding:12px 16px;">{{ \Carbon\Carbon::create(null, $up->period_month, 1)->translatedFormat('F') }} {{ $up->period_year }}</td>
+                            <td style="padding:12px 16px;font-weight:700;color:#0F172A;">{{ number_format($up->total_records) }} titik</td>
+                            <td style="padding:12px 16px;">
+                                @if($up->status === 'completed')
+                                    <span style="background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;">✅ Selesai</span>
+                                @elseif($up->status === 'processing')
+                                    <span style="background:#FFFBEB;color:#D97706;border:1px solid #FDE68A;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;">⏳ Proses</span>
+                                @else
+                                    <span style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;">❌ Gagal</span>
+                                @endif
+                            </td>
+                            <td style="padding:12px 16px;color:#94A3B8;font-size:12px;">{{ $up->created_at->format('d/m/Y H:i') }}</td>
+                            <td style="padding:12px 16px;text-align:center;">
+                                <form action="{{ route('admin.data.delete', $up->id) }}" method="POST"
+                                      onsubmit="return confirm('Hapus riwayat berkas {{ addslashes($up->file_name) }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" style="border:1px solid #FECACA;background:#FEF2F2;color:#DC2626;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;">🗑️</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
 </div>
-@endsection
+
+{{-- ================================================================
+     MODAL: IMPORT BERKAS (EXCEL / CSV / PDF)
+     ================================================================ --}}
+<div id="modalUpload"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;width:100%;max-width:540px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
+
+        {{-- Header --}}
+        <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#F0F9FF;">
+            <div>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;"> Import Data Pasang Surut</h3>
+                <p style="margin:3px 0 0;font-size:12px;color:#64748B;">Upload file Excel (.xlsx, .xls), CSV, atau PDF untuk diekstrak otomatis oleh Python parser.</p>
+            </div>
+            <button onclick="closeModal('modalUpload')"
+                style="background:#F1F5F9;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        {{-- Form --}}
+        <form action="{{ route('admin.data.upload') }}" method="POST" enctype="multipart/form-data" style="padding:24px;">
+            @csrf
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Pilih Lokasi Monitoring <span style="color:#ef4444;">*</span></label>
+                <select name="location_id" required
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
+                    <option value="">-- Pilih Lokasi --</option>
+                    @foreach($locations as $loc)
+                        <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Bulan Periode <span style="color:#ef4444;">*</span></label>
+                    <select name="period_month" required
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
+                        @for($m = 1; $m <= 12; $m++)
+                            <option value="{{ $m }}" {{ $m == 7 ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::create(null, $m, 1)->translatedFormat('F') }}
+                            </option>
+                        @endfor
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tahun Periode <span style="color:#ef4444;">*</span></label>
+                    <input type="number" name="period_year" required value="2026" min="2020" max="2035"
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Pilih Berkas (.csv, .xlsx, .xls, .pdf) <span style="color:#ef4444;">*</span></label>
+                <div style="border:2px dashed #93C5FD;border-radius:12px;padding:24px;text-align:center;background:#F8FAFC;cursor:pointer;"
+                     onclick="document.getElementById('uploadFileInput').click()">
+                    <input type="file" name="file_data" id="uploadFileInput" accept=".csv,.xlsx,.xls,.pdf" required
+                           style="display:none;"
+                           onchange="document.getElementById('uploadFileText').innerText = this.files[0] ? '📄 ' + this.files[0].name : 'Klik untuk memilih berkas (.csv, .xlsx, .pdf)'">
+                    <div style="font-size:32px;margin-bottom:6px;"></div>
+                    <div id="uploadFileText" style="font-size:13px;font-weight:700;color:#0284C7;">
+                        Klik untuk memilih berkas (.csv, .xlsx, .pdf)
+                    </div>
+                    <div style="font-size:11.5px;color:#94A3B8;margin-top:4px;">Ukuran maksimal: 15 MB per file</div>
+                </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:16px;border-top:1px solid #F1F5F9;">
+                <button type="button" onclick="closeModal('modalUpload')"
+                    style="padding:10px 20px;font-size:13px;font-weight:600;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="padding:10px 22px;font-size:13px;font-weight:700;color:#fff;background:#0284C7;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(2,132,199,0.25);">
+                    ⚡ Proses & Simpan Data
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ================================================================
+     MODAL: TAMBAH PREDIKSI (MANUAL)
+     ================================================================ --}}
+<div id="modalTambah"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;width:100%;max-width:560px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
+
+        {{-- Header --}}
+        <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#F8FAFC;">
+            <div>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;"> Tambah Prediksi Pasang Surut</h3>
+                <p style="margin:3px 0 0;font-size:12px;color:#94A3B8;">Isi semua field di bawah ini untuk menambah data baru</p>
+            </div>
+            <button onclick="closeModal('modalTambah')"
+                style="background:#F1F5F9;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        {{-- Form --}}
+        <form action="{{ route('admin.data.store') }}" method="POST" style="padding:24px;">
+            @csrf
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Lokasi Stasiun <span style="color:#ef4444;">*</span></label>
+                <select name="location_id" required
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
+                    <option value="">-- Pilih Lokasi --</option>
+                    @foreach($locations as $loc)
+                        <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tanggal Prediksi <span style="color:#ef4444;">*</span></label>
+                <input type="date" name="record_date" required value="{{ now()->format('Y-m-d') }}"
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Pasang Tertinggi <span style="color:#ef4444;">*</span></label>
+                    <input type="text" name="high_tide_time" required placeholder="Contoh: 01.00 WIB"
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Pasang (meter) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" step="0.01" name="high_tide_level" required placeholder="Contoh: 0.81"
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Surut Terendah <span style="color:#ef4444;">*</span></label>
+                    <input type="text" name="low_tide_time" required placeholder="Contoh: 12.00 WIB"
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Surut (meter) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" step="0.01" name="low_tide_level" required placeholder="Contoh: -0.91"
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Status Kondisi <span style="color:#ef4444;">*</span></label>
+                <select name="status" required
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
+                    <option value="Aman">🟢 Aman</option>
+                    <option value="Waspada">🟡 Waspada</option>
+                    <option value="Bahaya">🔴 Bahaya</option>
+                </select>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:16px;border-top:1px solid #F1F5F9;">
+                <button type="button" onclick="closeModal('modalTambah')"
+                    style="padding:10px 20px;font-size:13px;font-weight:600;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="padding:10px 22px;font-size:13px;font-weight:700;color:#fff;background:#1D61E7;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(29,97,231,0.25);">
+                    💾 Simpan Prediksi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ================================================================
+     MODAL: EDIT PREDIKSI
+     ================================================================ --}}
+<div id="modalEdit"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;width:100%;max-width:560px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
+
+        <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#FFFBEB;">
+            <div>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;">✏️ Edit Prediksi Pasang Surut</h3>
+                <p style="margin:3px 0 0;font-size:12px;color:#94A3B8;">Perbarui data prediksi yang dipilih</p>
+            </div>
+            <button onclick="closeModal('modalEdit')"
+                style="background:#F1F5F9;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        <form id="formEdit" method="POST" style="padding:24px;">
+            @csrf
+            @method('PUT')
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Lokasi Stasiun <span style="color:#ef4444;">*</span></label>
+                <select name="location_id" id="editLocId" required
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
+                    <option value="">-- Pilih Lokasi --</option>
+                    @foreach($locations as $loc)
+                        <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tanggal Prediksi <span style="color:#ef4444;">*</span></label>
+                <input type="date" name="record_date" id="editDate" required
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Pasang Tertinggi</label>
+                    <input type="text" name="high_tide_time" id="editHighTime" required
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Pasang (meter)</label>
+                    <input type="number" step="0.01" name="high_tide_level" id="editHighLevel" required
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Surut Terendah</label>
+                    <input type="text" name="low_tide_time" id="editLowTime" required
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Surut (meter)</label>
+                    <input type="number" step="0.01" name="low_tide_level" id="editLowLevel" required
+                        style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Status Kondisi</label>
+                <select name="status" id="editStatus" required
+                    style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
+                    <option value="Aman">🟢 Aman</option>
+                    <option value="Waspada">🟡 Waspada</option>
+                    <option value="Bahaya">🔴 Bahaya</option>
+                </select>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:16px;border-top:1px solid #F1F5F9;">
+                <button type="button" onclick="closeModal('modalEdit')"
+                    style="padding:10px 20px;font-size:13px;font-weight:600;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="padding:10px 22px;font-size:13px;font-weight:700;color:#fff;background:#D97706;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(217,119,6,0.25);">
+                    💾 Update Data
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ================================================================
+     MODAL: DETAIL PREDIKSI
+     ================================================================ --}}
+<div id="modalDetail"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
+
+        <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#EFF6FF;">
+            <div>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;">👁️ Detail Prediksi</h3>
+                <p style="margin:3px 0 0;font-size:12px;color:#94A3B8;">Informasi lengkap data prediksi</p>
+            </div>
+            <button onclick="closeModal('modalDetail')"
+                style="background:#F1F5F9;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;color:#64748B;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        <div id="detailBody" style="padding:24px;">
+            {{-- Diisi JavaScript --}}
+        </div>
+
+        <div style="padding:16px 24px;border-top:1px solid #F1F5F9;text-align:right;">
+            <button onclick="closeModal('modalDetail')"
+                style="padding:10px 22px;font-size:13px;font-weight:600;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL HAPUS SEMUA DATA --}}
+<div id="modalHapusSemua" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;animation:modalIn .15s ease-out;text-align:center;padding:28px 24px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px;">
+            ⚠️
+        </div>
+        <h3 style="font-size:18px;font-weight:800;color:#0F172A;margin:0 0 8px;">Hapus Semua Data Prediksi?</h3>
+        <p style="font-size:13px;color:#64748B;line-height:1.6;margin:0 0 24px;">
+            Tindakan ini akan menghapus <strong>seluruh {{ $totalData }} data prediksi pasang surut</strong> yang tersimpan di sistem. Tindakan ini tidak dapat dibatalkan.
+        </p>
+
+        <form action="{{ route('admin.data.destroyAll') }}" method="POST">
+            @csrf
+            @method('DELETE')
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button type="button" onclick="closeModal('modalHapusSemua')"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#fff;background:#DC2626;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,0.3);">
+                    Ya, Hapus Semua
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- MODAL HAPUS HASIL FILTER --}}
+<div id="modalHapusFilter" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:20px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.2);overflow:hidden;animation:modalIn .15s ease-out;text-align:center;padding:28px 24px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px;">
+            🗑️
+        </div>
+        <h3 style="font-size:18px;font-weight:800;color:#0F172A;margin:0 0 8px;">Hapus Data Sesuai Filter?</h3>
+        <p style="font-size:13px;color:#64748B;line-height:1.6;margin:0 0 24px;">
+            Tindakan ini akan menghapus <strong>{{ $predictions->total() }} data prediksi</strong> yang cocok dengan filter pencarian saat ini.
+        </p>
+
+        <form action="{{ route('admin.data.destroyAll') }}" method="POST">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="location_id" value="{{ request('location_id') }}">
+            <input type="hidden" name="date" value="{{ request('date') }}">
+            <input type="hidden" name="status" value="{{ request('status') }}">
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button type="button" onclick="closeModal('modalHapusFilter')"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#64748B;background:#F1F5F9;border:none;border-radius:10px;cursor:pointer;">
+                    Batal
+                </button>
+                <button type="submit"
+                    style="flex:1;padding:11px 18px;font-size:13.5px;font-weight:700;color:#fff;background:#DC2626;border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,0.3);">
+                    Ya, Hapus
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ================================================================
+     JAVASCRIPT
+     ================================================================ --}}
+<script>
+    // --- Modal Helpers ---
+    function openModal(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'flex';
+        setTimeout(function() { el.style.opacity = 1; }, 10);
+    }
+    function closeModal(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    }
+    // Tutup saat klik backdrop
+    ['modalUpload','modalTambah','modalEdit','modalDetail','modalHapusSemua','modalHapusFilter'].forEach(function(id) {
+        var modal = document.getElementById(id);
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal(id);
+            });
+        }
+    });
+
+    // --- Edit Modal ---
+    function openEdit(data) {
+        var baseUrl = "{{ url('admin/data/prediksi') }}/" + data.id;
+        document.getElementById('formEdit').action = baseUrl;
+        document.getElementById('editLocId').value    = data.location_id;
+        document.getElementById('editDate').value     = data.record_date;
+        document.getElementById('editHighTime').value = data.high_tide_time;
+        document.getElementById('editHighLevel').value= data.high_tide_level;
+        document.getElementById('editLowTime').value  = data.low_tide_time;
+        document.getElementById('editLowLevel').value = data.low_tide_level;
+        document.getElementById('editStatus').value   = data.status;
+        openModal('modalEdit');
+    }
+
+    // --- Detail Modal ---
+    function openDetail(d) {
+        var badgeStyle = {
+            'Aman':    'background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;',
+            'Waspada': 'background:#FFFBEB;color:#D97706;border:1px solid #FDE68A;',
+            'Bahaya':  'background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;',
+        };
+        var bs = badgeStyle[d.status] || 'background:#F1F5F9;color:#64748B;border:1px solid #CBD5E1;';
+
+        var rows = [
+            ['📍 Lokasi',         '<strong style="color:#0369A1;">' + d.lokasi + '</strong>'],
+            ['📅 Tanggal',        d.tanggal],
+            ['🌊 Jam Pasang',     d.high_time],
+            ['📈 Tinggi Pasang',  '<strong style="color:#1D61E7;">' + d.high_level + ' m</strong>'],
+            ['⬇️ Jam Surut',      d.low_time],
+            ['📉 Tinggi Surut',   '<strong style="color:#7C3AED;">' + d.low_level + ' m</strong>'],
+            ['🚦 Status',         '<span style="' + bs + 'padding:3px 12px;border-radius:9999px;font-size:12px;font-weight:700;">' + d.status + '</span>'],
+            ['🕐 Diperbarui',     '<span style="color:#94A3B8;">' + d.update + '</span>'],
+        ];
+
+        var html = '<table style="width:100%;border-collapse:collapse;font-size:13.5px;">';
+        rows.forEach(function(r) {
+            html += '<tr style="border-bottom:1px solid #F8FAFC;">'
+                  + '<td style="padding:10px 8px;color:#64748B;font-weight:700;width:155px;white-space:nowrap;">' + r[0] + '</td>'
+                  + '<td style="padding:10px 8px;">' + r[1] + '</td>'
+                  + '</tr>';
+        });
+        html += '</table>';
+
+        document.getElementById('detailBody').innerHTML = html;
+        openModal('modalDetail');
+    }
+
+    // Event Delegation for Table Buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-detail').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                openDetail({
+                    lokasi: this.dataset.lokasi,
+                    tanggal: this.dataset.tanggal,
+                    high_time: this.dataset.highTime,
+                    high_level: this.dataset.highLevel,
+                    low_time: this.dataset.lowTime,
+                    low_level: this.dataset.lowLevel,
+                    status: this.dataset.status,
+                    update: this.dataset.update
+                });
+            });
+        });
+
+        document.querySelectorAll('.btn-edit').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                openEdit({
+                    id: this.dataset.id,
+                    location_id: this.dataset.locationId,
+                    record_date: this.dataset.recordDate,
+                    high_tide_time: this.dataset.highTideTime,
+                    high_tide_level: this.dataset.highTideLevel,
+                    low_tide_time: this.dataset.lowTideTime,
+                    low_tide_level: this.dataset.lowTideLevel,
+                    status: this.dataset.status
+                });
+            });
+        });
+
+        document.querySelectorAll('.form-delete').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                var info = this.dataset.info || 'data ini';
+                if (!confirm('Hapus prediksi ' + info + '?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+
+</x-app-layout>
