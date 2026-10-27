@@ -140,8 +140,8 @@
                 <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Urutkan</label>
                 <select name="sort"
                     style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:10px 12px;font-size:13px;color:#334155;background:#fff;outline:none;">
-                    <option value="terbaru" {{ request('sort', 'terbaru') === 'terbaru' ? 'selected' : '' }}>Terbaru</option>
-                    <option value="terlama" {{ request('sort') === 'terlama' ? 'selected' : '' }}>Terlama</option>
+                    <option value="terlama" {{ request('sort', 'terlama') === 'terlama' ? 'selected' : '' }}>Tanggal Awal (1 - 31)</option>
+                    <option value="terbaru" {{ request('sort') === 'terbaru' ? 'selected' : '' }}>Tanggal Terbaru</option>
                     <option value="lokasi" {{ request('sort') === 'lokasi' ? 'selected' : '' }}>Lokasi A-Z</option>
                 </select>
             </div>

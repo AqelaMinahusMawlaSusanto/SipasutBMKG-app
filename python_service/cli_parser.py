@@ -134,55 +134,11 @@ def parse_file_comprehensive(file_path: str, month: int = 7, year: int = 2026) -
     # 1. Parsing jika file PDF
     if ext == '.pdf':
         try:
-            # Import parser matrix
             from tidal_parser import parse_file as parse_pdf_matrix
-            res = parse_pdf_matrix(file_path)
-            if "error" in res or not res.get("data"):
+            res = parse_pdf_matrix(file_path, default_month=month, default_year=year)
+            if "error" in res:
                 return {"error": res.get("error", "Gagal mengekstrak tabel dari PDF"), "predictions": [], "hourly_data": []}
-
-            hourly_data = res.get("data", [])
-            
-            # Kelompokkan data per hari untuk mengekstrak prediksi harian (High/Low Tide)
-            by_day = {}
-            for item in hourly_data:
-                d = item["day"]
-                by_day.setdefault(d, []).append(item)
-
-            predictions = []
-            for d, hours in sorted(by_day.items()):
-                max_item = max(hours, key=lambda x: x["water_level"])
-                min_item = min(hours, key=lambda x: x["water_level"])
-
-                # Skala level air: jika > 10 cm, konversi ke meter (/ 100)
-                max_val = max_item["water_level"]
-                min_val = min_item["water_level"]
-
-                high_m = round(max_val / 100.0, 2) if abs(max_val) >= 10 else round(float(max_val), 2)
-                low_m = round(min_val / 100.0, 2) if abs(min_val) >= 10 else round(float(min_val), 2)
-
-                date_str = f"{year:04d}-{month:02d}-{d:02d}"
-                high_time = f"{max_item['hour']:02d}.00 WIB"
-                low_time = f"{min_item['hour']:02d}.00 WIB"
-                status = normalize_status(high_m)
-
-                predictions.append({
-                    "record_date": date_str,
-                    "day": d,
-                    "high_tide_time": high_time,
-                    "high_tide_level": high_m,
-                    "low_tide_time": low_time,
-                    "low_tide_level": low_m,
-                    "status": status
-                })
-
-            return {
-                "status": "success",
-                "format_type": "pdf_matrix",
-                "file_name": filename,
-                "total_records": len(predictions),
-                "predictions": predictions,
-                "hourly_data": hourly_data
-            }
+            return res
         except Exception as e:
             return {"error": f"Gagal membaca file PDF: {str(e)}", "predictions": [], "hourly_data": []}
 

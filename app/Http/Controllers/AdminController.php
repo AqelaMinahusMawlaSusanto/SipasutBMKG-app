@@ -53,17 +53,18 @@ class AdminController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Sorting
-        $sort = $request->query('sort', 'terbaru');
-        if ($sort === 'terlama') {
-            $query->orderBy('record_date', 'asc')->orderBy('id', 'asc');
+        // Sorting (default urut dari tanggal awal 1..31 agar nomor urut 1 dimulai dari tanggal awal)
+        $sort = $request->query('sort', 'terlama');
+        if ($sort === 'terbaru') {
+            $query->orderBy('record_date', 'desc')->orderBy('location_id', 'asc');
         } elseif ($sort === 'lokasi') {
             $query->join('locations', 'predictions.location_id', '=', 'locations.id')
                 ->orderBy('locations.name', 'asc')
+                ->orderBy('predictions.record_date', 'asc')
                 ->select('predictions.*');
         } else {
-            // Default terbaru
-            $query->orderBy('record_date', 'desc')->orderBy('location_id', 'asc');
+            // Default: Terlama / Urut Tanggal dari awal (1..31)
+            $query->orderBy('record_date', 'asc')->orderBy('location_id', 'asc');
         }
 
         $predictions = $query->paginate(10)->withQueryString();
@@ -403,11 +404,28 @@ class AdminController extends Controller
         try {
             $escapedPath = escapeshellarg($filePath);
             $pyScript = escapeshellarg(base_path('python_service/cli_parser.py'));
-            $cmd = "python {$pyScript} {$escapedPath} {$month} {$year} 2>&1";
+
+            // Cari binary Python yang valid di sistem
+            $pythonBin = 'python';
+            $candidates = [
+                'C:\\Users\\minah\\AppData\\Local\\Python\\bin\\python.exe',
+                'C:\\laragon\\bin\\python\\python.exe',
+                'python3',
+                'py',
+                'python'
+            ];
+            foreach ($candidates as $cand) {
+                if (file_exists($cand)) {
+                    $pythonBin = "\"{$cand}\"";
+                    break;
+                }
+            }
+
+            $cmd = "{$pythonBin} {$pyScript} {$escapedPath} {$month} {$year} 2>&1";
             $output = shell_exec($cmd);
             $decoded = json_decode($output, true);
 
-            if ($decoded && is_array($decoded)) {
+            if ($decoded && is_array($decoded) && empty($decoded['error'])) {
                 return $decoded;
             }
         } catch (\Exception $ex) {

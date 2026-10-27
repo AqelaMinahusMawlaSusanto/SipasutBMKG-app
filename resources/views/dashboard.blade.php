@@ -5,17 +5,17 @@
 @section('content')
 
     {{-- Banner Notifikasi Peringatan Dinamis dari Admin --}}
-    <div id="liveNotifBanner" class="alert-banner alert-banner--{{ $notification ? $notification->type : 'info' }}" style="{{ $notification ? '' : 'display: none;' }}; margin: 16px 48px -8px; border-radius: 10px; padding: 14px 20px; display: {{ $notification ? 'flex' : 'none' }}; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.08); flex-shrink: 0;">
+    <div id="liveNotifBanner" class="alert-banner alert-banner--{{ $notification ? $notification->type : 'info' }}" style="{{ $notification ? '' : 'display: none !important;' }}">
+        <div class="alert-banner__content">
+            <span class="alert-banner__icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
             </span>
-            <div>
-                <strong id="liveNotifTitle" style="font-size: 14px; display: block;">{{ $notification ? $notification->title : '' }}</strong>
-                <span id="liveNotifMsg" style="font-size: 13px; opacity: 0.9;">{{ $notification ? $notification->message : '' }}</span>
+            <div class="alert-banner__text">
+                <strong id="liveNotifTitle">{{ $notification ? $notification->title : '' }}</strong>
+                <span id="liveNotifMsg">{{ $notification ? $notification->message : '' }}</span>
             </div>
         </div>
-        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.3);">
+        <span class="alert-banner__badge">
             Pemberitahuan Admin
         </span>
     </div>
