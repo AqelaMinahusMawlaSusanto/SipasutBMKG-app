@@ -4,9 +4,35 @@
 
 @section('content')
 
+    {{-- Banner Notifikasi Peringatan Dinamis dari Admin --}}
+    <div id="liveNotifBanner" class="alert-banner alert-banner--{{ $notification ? $notification->type : 'info' }}" style="{{ $notification ? '' : 'display: none !important;' }}">
+        <div class="alert-banner__content">
+            <span class="alert-banner__icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="alert-banner__text">
+                <strong id="liveNotifTitle">{{ $notification ? $notification->title : '' }}</strong>
+                <span id="liveNotifMsg">{{ $notification ? $notification->message : '' }}</span>
+            </div>
+        </div>
+        <span class="alert-banner__badge">
+            Pemberitahuan Admin
+        </span>
+    </div>
+
     <section class="hero">
         <div class="hero__inner">
-            <h1 class="hero__title">Monitoring Pasang Surut Air Laut</h1>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <h1 class="hero__title" style="margin: 0;">Monitoring Pasang Surut Air Laut</h1>
+            </div>
+            
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.18); backdrop-filter: blur(4px); padding: 5px 12px; border-radius: 20px; margin-bottom: 14px; font-size: 12px; color: #fff;">
+                <span id="livePulseDot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; box-shadow: 0 0 8px #22c55e;"></span>
+                <span id="liveStatusText">Live Data Terhubung</span>
+                <span style="opacity: 0.6;">•</span>
+                <span id="liveTimeBadge">{{ now()->format('H:i') }} WIB</span>
+            </div>
+
             <p class="hero__subtitle">
                 Pantau kondisi pasang surut air laut secara langsung untuk mendukung
                 aktivitas pelayaran dan perikanan.
@@ -42,13 +68,13 @@
             </span>
             <div>
                 <p class="stat-card__label">Pasang Saat Ini</p>
-                <p class="stat-card__value">{{ number_format($active['current_tide'], 1) }} m</p>
-                <p class="stat-card__meta">{{ $active['current_time'] }}</p>
+                <p class="stat-card__value" id="valCurrentTide">{{ number_format($active['current_tide'], 1) }} m</p>
+                <p class="stat-card__meta" id="valCurrentTime">{{ $active['current_time'] }}</p>
             </div>
         </div>
 
         <div class="stat-card">
-            <span class="stat-card__icon stat-card__icon--status status--{{ $active['status'] }}" aria-hidden="true">
+            <span class="stat-card__icon stat-card__icon--status status--{{ $active['status'] }}" id="iconStatus" aria-hidden="true">
                 @if ($active['status'] === 'aman')
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 @elseif ($active['status'] === 'waspada')
@@ -59,8 +85,8 @@
             </span>
             <div>
                 <p class="stat-card__label">Status</p>
-                <p class="stat-card__value status-text--{{ $active['status'] }}">{{ $active['status_label'] }}</p>
-                <p class="stat-card__meta">{{ $active['status_desc'] }}</p>
+                <p class="stat-card__value status-text--{{ $active['status'] }}" id="valStatusLabel">{{ $active['status_label'] }}</p>
+                <p class="stat-card__meta" id="valStatusDesc">{{ $active['status_desc'] }}</p>
             </div>
         </div>
 
@@ -70,8 +96,8 @@
             </span>
             <div>
                 <p class="stat-card__label">Kecepatan Angin</p>
-                <p class="stat-card__value">{{ $active['wind_speed'] }} km/jam</p>
-                <p class="stat-card__meta">{{ $active['wind_dir'] }}</p>
+                <p class="stat-card__value" id="valWindSpeed">{{ $active['wind_speed'] }} km/jam</p>
+                <p class="stat-card__meta" id="valWindDir">{{ $active['wind_dir'] }}</p>
             </div>
         </div>
 
@@ -81,27 +107,34 @@
             </span>
             <div>
                 <p class="stat-card__label">Cuaca</p>
-                <p class="stat-card__value">{{ $active['weather'] }}</p>
-                <p class="stat-card__meta">{{ $active['temperature'] }}&deg;C</p>
+                <p class="stat-card__value" id="valWeather">{{ $active['weather'] }}</p>
+                <p class="stat-card__meta" id="valTemperature">{{ $active['temperature'] }}&deg;C</p>
             </div>
         </div>
     </section>
 
     <section class="main-grid">
         <div class="chart-card">
-            <h2 class="chart-card__title">Prediksi Pasang Surut Hari Ini</h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <h2 class="chart-card__title" style="margin: 0;">Prediksi Pasang Surut Hari Ini</h2>
+                <span id="chartLiveIndicator" style="font-size: 11px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; gap: 5px;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #0284c7;"></span> Auto Sync
+                </span>
+            </div>
             <div class="chart-card__canvas-wrap">
                 <canvas id="tideChart" height="260"></canvas>
             </div>
-            <p class="chart-card__footnote">
+            <p class="chart-card__footnote" id="chartFootnote">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                @if ($active['status'] === 'bahaya')
-                    Potensi pasang tertinggi diperkirakan terjadi pada pukul {{ $active['next_high']['time'] }}
-                @elseif ($active['status'] === 'waspada')
-                    Prediksi pasang tinggi diperkirakan terjadi pada pukul {{ $active['next_high']['time'] }}
-                @else
-                    Prediksi pasang tertinggi berikutnya {{ number_format($active['next_high']['value'], 1) }} m pada pukul {{ $active['next_high']['time'] }}
-                @endif
+                <span id="chartFootnoteText">
+                    @if ($active['status'] === 'bahaya')
+                        Potensi pasang tertinggi diperkirakan terjadi pada pukul {{ $active['next_high']['time'] }}
+                    @elseif ($active['status'] === 'waspada')
+                        Prediksi pasang tinggi diperkirakan terjadi pada pukul {{ $active['next_high']['time'] }}
+                    @else
+                        Prediksi pasang tertinggi berikutnya {{ number_format($active['next_high']['value'], 1) }} m pada pukul {{ $active['next_high']['time'] }}
+                    @endif
+                </span>
             </p>
         </div>
 
@@ -112,27 +145,27 @@
                     <li>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z" stroke="currentColor" stroke-width="2"/></svg>
                         <span>
-                            <strong>{{ $active['label'] }}</strong>
-                            <small>{{ $active['kabupaten'] }}</small>
+                            <strong id="valInfoLabel">{{ $active['label'] }}</strong>
+                            <small id="valInfoKab">{{ $active['kabupaten'] }}</small>
                         </span>
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg> Update Terakhir</span>
-                        <strong>{{ $active['updated_at'] }}</strong>
+                        <strong id="valUpdatedAt">{{ $active['updated_at'] }}</strong>
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2" stroke="currentColor" stroke-width="2"/></svg> Ketinggian Terakhir</span>
-                        <strong>{{ number_format($active['last_height'], 1) }} m</strong>
+                        <strong id="valLastHeight">{{ number_format($active['last_height'], 1) }} m</strong>
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z" stroke="currentColor" stroke-width="2"/></svg> Koordinat</span>
-                        <strong>{{ $active['coordinate'] }}</strong>
+                        <strong id="valCoordinate">{{ $active['coordinate'] }}</strong>
                     </li>
                 </ul>
             </div>
 
-            <div class="warning-card warning-card--{{ $active['status'] }}">
-                <span class="warning-card__icon" aria-hidden="true">
+            <div class="warning-card warning-card--{{ $active['status'] }}" id="warningCard">
+                <span class="warning-card__icon" id="warningCardIcon" aria-hidden="true">
                     @if ($active['status'] === 'aman')
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     @else
@@ -141,8 +174,8 @@
                 </span>
                 <div>
                     <p class="warning-card__title">Peringatan Hari Ini</p>
-                    <p class="warning-card__headline">{{ $active['warning_title'] }}</p>
-                    <p class="warning-card__desc">{{ $active['warning_desc'] }}</p>
+                    <p class="warning-card__headline" id="valWarningTitle">{{ $active['warning_title'] }}</p>
+                    <p class="warning-card__desc" id="valWarningDesc">{{ $active['warning_desc'] }}</p>
                 </div>
             </div>
         </div>
@@ -152,6 +185,7 @@
     <script>
         window.TIDE_DATA = @json($locations);
         window.SELECTED_LOCATION = @json($selected);
+        window.REALTIME_URL = "{{ route('dashboard.realtime') }}";
     </script>
     <script src="{{ asset('js/dashboard.js') }}"></script>
 

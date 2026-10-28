@@ -125,33 +125,44 @@ ul { list-style: none; margin: 0; padding: 0; }
 .location-select__trigger span#locationLabel { flex: 1; text-align: left; }
 .location-select__chevron { color: var(--slate); transition: transform .15s ease; }
 
-.location-select.is-open .location-select__chevron { transform: rotate(180deg); }
+.location-select {
+    position: relative;
+    z-index: 1000;
+}
 
 .location-select__menu {
     display: none;
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + 8px);
     left: 0;
-    right: 0;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, .2);
+    min-width: 100%;
+    margin: 0;
     padding: 6px;
-    z-index: 20;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    z-index: 1001;
 }
 
-.location-select.is-open .location-select__menu { display: block; }
+.location-select__menu.is-open {
+    display: block;
+}
 
 .location-select__menu li a {
     display: block;
     padding: 10px 12px;
+    color: #1e293b;
+    text-decoration: none;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ink);
+    white-space: nowrap;
 }
 
-.location-select__menu li a:hover { background: var(--blue-light); }
+.location-select__menu a:hover {
+    background: #eff6ff;
+    color: #2563eb;
+}
 
 /* ---------- Stat cards ---------- */
 .stat-cards {
@@ -275,15 +286,102 @@ ul { list-style: none; margin: 0; padding: 0; }
 .warning-card__headline { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
 .warning-card__desc { margin: 0; font-size: 12px; color: var(--slate); line-height: 1.5; }
 
+/* ---------- Alert Banner ---------- */
+.alert-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 20px 48px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    box-sizing: border-box;
+}
+
+.alert-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.alert-banner__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.07);
+    flex-shrink: 0;
+}
+
+.alert-banner__text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.5;
+}
+
+.alert-banner__text strong {
+    font-size: 14px;
+    display: block;
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+.alert-banner__text span {
+    font-size: 13px;
+    opacity: 0.95;
+    word-break: break-word;
+    display: block;
+}
+
+.alert-banner__badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.alert-banner--info { background: #e0f2fe; color: #0369a1; border-left: 4px solid #0284c7; }
+.alert-banner--warning { background: #fef3c7; color: #b45309; border-left: 4px solid #f59e0b; }
+.alert-banner--danger { background: #fee2e2; color: #b91c1c; border-left: 4px solid #ef4444; }
+.alert-banner--success { background: #dcfce7; color: #15803d; border-left: 4px solid #22c55e; }
+
+@keyframes pulseDot {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+#livePulseDot {
+    animation: pulseDot 2s infinite ease-in-out;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
     .navbar { padding: 14px 20px; }
     .navbar__menu { gap: 16px; flex-wrap: wrap; }
+    .alert-banner { margin: 16px 20px; }
     .hero { padding: 40px 20px 80px; }
     .stat-cards { grid-template-columns: 1fr 1fr; padding: 0 20px; }
     .main-grid { grid-template-columns: 1fr; padding: 20px; }
 }
 
 @media (max-width: 560px) {
+    .alert-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        margin: 14px 16px;
+    }
+    .alert-banner__badge {
+        align-self: flex-start;
+    }
     .stat-cards { grid-template-columns: 1fr; }
 }
