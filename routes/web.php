@@ -24,6 +24,7 @@ Route::get('/download-pasang-surut/export', [DownloadController::class, 'export'
 
 Route::get('/lokasi', [LokasiController::class, 'index'])->name('lokasi.index');
 Route::get('/kalender', [KalenderController::class, 'index'])->name('kalender.index');
+Route::get('/kalender/data', [KalenderController::class, 'data'])->name('kalender.data');
 
 // =====================================
 // AUTHENTICATION (Laravel Protected)

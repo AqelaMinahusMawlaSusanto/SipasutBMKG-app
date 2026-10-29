@@ -108,5 +108,6 @@
 @endsection
 
 @push('scripts')
+    <script>window.KALENDER_DATA_URL = "{{ route('kalender.data') }}";</script>
     <script src="{{ asset('js/kalender.js') }}"></script>
 @endpush

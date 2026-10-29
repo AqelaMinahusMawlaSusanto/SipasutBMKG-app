@@ -100,7 +100,7 @@
                                         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
                                             {{-- Detail Button --}}
                                             <button type="button" class="btn-detail-loc"
-                                                style="border: 1px solid #93C5FD; background-color: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 8px; cursor: pointer;"
+                                                style="border: 1px solid #93C5FD; background-color: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; line-height: 1;"
                                                 title="Detail"
                                                 data-name="{{ $station->name }}"
                                                 data-code="{{ $station->code }}"
@@ -109,12 +109,12 @@
                                                 data-inst="{{ $station->institution ?? 'BMKG Stasiun Meteorologi Maritim Perak Surabaya' }}"
                                                 data-desc="{{ $station->description ?? 'Tidak ada keterangan tambahan.' }}"
                                                 data-status="{{ $station->is_active ? 'Aktif' : 'Non-Aktif' }}">
-                                                
+                                                👁️
                                             </button>
 
                                             {{-- Edit Button --}}
                                             <button type="button" class="btn-edit-loc"
-                                                style="border: 1px solid #FDE68A; background-color: #FEF3C7; color: #D97706; padding: 6px 10px; border-radius: 8px; cursor: pointer;"
+                                                style="border: 1px solid #FDE68A; background-color: #FEF3C7; color: #D97706; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; line-height: 1;"
                                                 title="Edit"
                                                 data-id="{{ $station->id }}"
                                                 data-name="{{ $station->name }}"
@@ -124,7 +124,7 @@
                                                 data-inst="{{ $station->institution }}"
                                                 data-desc="{{ $station->description }}"
                                                 data-active="{{ $station->is_active ? '1' : '0' }}">
-                                                
+                                                ✏️
                                             </button>
 
                                             {{-- Delete Form --}}
@@ -133,7 +133,7 @@
                                                   data-name="{{ $station->name }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" style="border: 1px solid #FECACA; background-color: #FEE2E2; color: #DC2626; padding: 6px 10px; border-radius: 8px; cursor: pointer;" title="Hapus">
+                                                <button type="submit" style="border: 1px solid #FECACA; background-color: #FEE2E2; color: #DC2626; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; line-height: 1;" title="Hapus">
                                                     🗑️
                                                 </button>
                                             </form>

@@ -36,10 +36,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin' || $this->hasRole('admin');
-    }
+    public function isAdmin()
+{
+    // Sesuaikan dengan logika role di database Anda
+    // Contoh jika kolom role berisi string 'admin':
+    return $this->role === 'admin'; 
+}
 
     public function activityLogs()
     {
