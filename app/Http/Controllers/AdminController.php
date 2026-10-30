@@ -408,7 +408,7 @@ class AdminController extends Controller
             // Cari binary Python yang valid di sistem
             $pythonBin = 'python';
             $candidates = [
-                'C:\\Users\\minah\\AppData\\Local\\Python\\bin\\python.exe',
+                'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python315\\python.exe',
                 'C:\\laragon\\bin\\python\\python.exe',
                 'python3',
                 'py',
@@ -460,15 +460,8 @@ class AdminController extends Controller
         }
 
         if (empty($records)) {
-            // Jika membaca PDF/Excel rumit tanpa python aktif, buat simulasi realistis dari nama file
-            for ($d = 1; $d <= 31; $d++) {
-                for ($h = 1; $h <= 24; $h++) {
-                    $lvl = (int)round(110 * sin(($h / 12) * 2 * M_PI - 1.2) + 30 * sin(($h / 6) * M_PI));
-                    $records[] = ['day' => $d, 'hour' => $h, 'water_level' => $lvl];
-                    $levels[] = $lvl;
-                }
-            }
-        }
+    return ['error' => 'Parser Python gagal membaca file. Periksa instalasi Python/pdfplumber.'];
+}
 
         $predictions = [];
         $byDay = [];
