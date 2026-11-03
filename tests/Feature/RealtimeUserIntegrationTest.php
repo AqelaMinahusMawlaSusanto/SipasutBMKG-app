@@ -118,4 +118,59 @@ class RealtimeUserIntegrationTest extends TestCase
         $responseDownload->assertStatus(200);
         $responseDownload->assertSee('Surabaya Timur');
     }
+
+    public function test_admin_manual_prediction_syncs_chart_and_tidal_data()
+    {
+        $today = now()->toDateString();
+        $predictionData = [
+            'location_id' => $this->location->id,
+            'record_date' => $today,
+            'high_tide_time' => '14.00 WIB',
+            'high_tide_level' => 2.10,
+            'low_tide_time' => '20.00 WIB',
+            'low_tide_level' => -0.60,
+            'status' => 'Waspada',
+        ];
+
+        // 1. Admin simpan data manual
+        $this->actingAs($this->admin)->post(route('admin.data.store'), $predictionData);
+
+        // 2. Cek apakah 24 jam tersinkron ke tabel tidal_data
+        $this->assertDatabaseCount('tidal_data', 24);
+        $this->assertDatabaseHas('tidal_data', [
+            'location_id' => $this->location->id,
+            'record_date' => $today,
+            'hour' => 14,
+            'water_level' => 210, // 2.10 m = 210 cm
+        ]);
+
+        // 3. User dashboard menampilkan data chart yang akurat
+        $response = $this->getJson(route('dashboard.realtime', ['lokasi' => 'surabaya-timur']));
+        $response->assertStatus(200);
+        $chart = $response->json('active.chart');
+        $this->assertEquals('hourly', $chart['source']);
+        $this->assertCount(24, $chart['points']);
+        $this->assertEquals('14.00 WIB', $chart['high']['time']);
+        $this->assertEquals(2.1, $chart['high']['v']);
+
+        // 4. Admin update data prediksi
+        $prediction = Prediction::where('location_id', $this->location->id)->first();
+        $updateData = array_merge($predictionData, [
+            'high_tide_level' => 3.20,
+            'status' => 'Bahaya',
+        ]);
+        $this->actingAs($this->admin)->put(route('admin.data.update', $prediction->id), $updateData);
+
+        // Verifikasi tidal_data dan realtime API terupdate
+        $this->assertDatabaseHas('tidal_data', [
+            'location_id' => $this->location->id,
+            'record_date' => $today,
+            'hour' => 14,
+            'water_level' => 320, // 3.20 m = 320 cm
+        ]);
+
+        $responseUpdated = $this->getJson(route('dashboard.realtime', ['lokasi' => 'surabaya-timur']));
+        $this->assertEquals('bahaya', $responseUpdated->json('active.status'));
+        $this->assertEquals(3.2, $responseUpdated->json('active.chart.high.v'));
+    }
 }
