@@ -1,3 +1,17 @@
+@php
+    /** @var \Illuminate\Support\ViewErrorBag $errors */
+    /** @var \Illuminate\Pagination\LengthAwarePaginator|\App\Models\Prediction[] $predictions */
+    /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\Location[] $locations */
+    /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\DataUpload[] $uploads */
+    $errors = $errors ?? new \Illuminate\Support\ViewErrorBag;
+    $totalData = $totalData ?? 0;
+    $totalLokasi = $totalLokasi ?? 0;
+    $dataHariIni = $dataHariIni ?? 0;
+    $updateTerakhir = $updateTerakhir ?? '09.00 WIB';
+    $locations = $locations ?? collect([]);
+    $predictions = $predictions ?? new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
+    $uploads = $uploads ?? collect([]);
+@endphp
 <x-app-layout>
 <div style="background-color:#F8FAFC;min-height:100vh;padding:32px 40px;font-family:'Poppins',sans-serif;">
 
@@ -12,7 +26,7 @@
             ⚠️ {{ session('warning') }}
         </div>
     @endif
-    @if($errors->any())
+    @if(isset($errors) && $errors->any())
         <div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:13px 18px;border-radius:12px;margin-bottom:20px;font-size:13px;">
             @foreach($errors->all() as $err)
                 <div style="margin-bottom:2px;">❌ {{ $err }}</div>
@@ -323,7 +337,7 @@
                                 <strong style="color:#0F172A;">{{ $up->file_name }}</strong>
                             </td>
                             <td style="padding:12px 16px;">{{ $up->location->name ?? '-' }}</td>
-                            <td style="padding:12px 16px;">{{ \Carbon\Carbon::create(null, $up->period_month, 1)->translatedFormat('F') }} {{ $up->period_year }}</td>
+                            <td style="padding:12px 16px;">{{ \Carbon\Carbon::create((int) ($up->period_year ?? date('Y')), (int) $up->period_month, 1)->translatedFormat('F') }} {{ $up->period_year }}</td>
                             <td style="padding:12px 16px;font-weight:700;color:#0F172A;">{{ number_format($up->total_records) }} titik</td>
                             <td style="padding:12px 16px;">
                                 @if($up->status === 'completed')
@@ -363,7 +377,7 @@
         {{-- Header --}}
         <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#F0F9FF;">
             <div>
-                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;"> Import Data Pasang Surut</h3>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;">📥 Import Data Pasang Surut</h3>
                 <p style="margin:3px 0 0;font-size:12px;color:#64748B;">Upload file Excel (.xlsx, .xls), CSV, atau PDF untuk diekstrak otomatis oleh Python parser.</p>
             </div>
             <button onclick="closeModal('modalUpload')"
@@ -392,7 +406,7 @@
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;background:#fff;">
                         @for($m = 1; $m <= 12; $m++)
                             <option value="{{ $m }}" {{ $m == 7 ? 'selected' : '' }}>
-                                {{ \Carbon\Carbon::create(null, $m, 1)->translatedFormat('F') }}
+                                {{ \Carbon\Carbon::create((int) date('Y'), (int) $m, 1)->translatedFormat('F') }}
                             </option>
                         @endfor
                     </select>
@@ -411,7 +425,7 @@
                     <input type="file" name="file_data" id="uploadFileInput" accept=".csv,.xlsx,.xls,.pdf" required
                            style="display:none;"
                            onchange="document.getElementById('uploadFileText').innerText = this.files[0] ? '📄 ' + this.files[0].name : 'Klik untuk memilih berkas (.csv, .xlsx, .pdf)'">
-                    <div style="font-size:32px;margin-bottom:6px;"></div>
+                    <div style="font-size:32px;margin-bottom:6px;">📁</div>
                     <div id="uploadFileText" style="font-size:13px;font-weight:700;color:#0284C7;">
                         Klik untuk memilih berkas (.csv, .xlsx, .pdf)
                     </div>
@@ -443,7 +457,7 @@
         {{-- Header --}}
         <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#F8FAFC;">
             <div>
-                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;"> Tambah Prediksi Pasang Surut</h3>
+                <h3 style="margin:0;font-size:16px;font-weight:800;color:#0F172A;">➕ Tambah Prediksi Pasang Surut</h3>
                 <p style="margin:3px 0 0;font-size:12px;color:#94A3B8;">Isi semua field di bawah ini untuk menambah data baru</p>
             </div>
             <button onclick="closeModal('modalTambah')"
