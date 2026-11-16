@@ -33,6 +33,8 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::get('/otp', [AuthController::class, 'showOtp'])->name('otp.show');
+Route::post('/otp', [AuthController::class, 'verifyOtp'])->name('otp.verify');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 // =====================================

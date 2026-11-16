@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Mail\OtpMail;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -75,36 +77,75 @@ class AuthController extends Controller
 
         $remember = $request->boolean('remember');
 
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
-            /** @var User $user */
-            $user = Auth::user();
-
+        if (! Auth::validate($credentials)) {
             ActivityLog::record(
-                'login',
-                "User {$user->name} ({$user->role}) berhasil login ke sistem.",
-                $user
+                'failed_login',
+                "Percobaan login gagal untuk email: {$request->email} dari IP " . $request->ip()
             );
 
-            if ($user->hasRole('admin') || $user->isAdmin()) {
-                return redirect()->intended(route('admin.dashboard'))
-                    ->with('success', "Selamat datang kembali, {$user->name}!");
-            }
-
-            return redirect()->intended(route('dashboard.index'))
-                ->with('success', "Selamat datang di SIPASUT, {$user->name}!");
+            return back()->withErrors([
+                'email' => 'Email atau password yang Anda masukkan tidak sesuai.',
+            ])->onlyInput('email');
         }
 
-        ActivityLog::record(
-            'failed_login',
-            "Percobaan login gagal untuk email: {$request->email} dari IP " . $request->ip()
-        );
+        $user = User::where('email', $credentials['email'])->first();
 
-        return back()->withErrors([
-            'email' => 'Email atau password yang Anda masukkan tidak sesuai.',
-        ])->onlyInput('email');
+        $code = (string) random_int(100000, 999999);
+
+        $user->update([
+            'otp_code' => Hash::make($code),
+            'otp_expires_at' => now()->addMinutes(5),
+        ]);
+
+        Mail::to($user->email)->send(new OtpMail($code));
+
+        $request->session()->put('otp_user_id', $user->id);
+        $request->session()->put('otp_remember', $remember);
+
+        return redirect()->route('otp.show');
     }
+
+    public function showOtp(Request $request)
+{
+    if (! $request->session()->has('otp_user_id')) {
+        return redirect()->route('login');
+    }
+
+    return view('admin.otp');
+}
+
+public function verifyOtp(Request $request)
+{
+    $request->validate([
+        'code' => ['required', 'digits:6'],
+    ]);
+
+    $userId = $request->session()->get('otp_user_id');
+    $user = $userId ? User::find($userId) : null;
+
+    if (! $user || ! $user->otp_code || now()->gt($user->otp_expires_at)) {
+        return redirect()->route('login')
+            ->withErrors(['email' => 'Kode OTP sudah kadaluarsa. Silakan login ulang.']);
+    }
+
+    if (! Hash::check($request->code, $user->otp_code)) {
+        return back()->withErrors(['code' => 'Kode OTP salah.']);
+    }
+
+    $user->update(['otp_code' => null, 'otp_expires_at' => null]);
+
+    $remember = $request->session()->pull('otp_remember', false);
+    $request->session()->forget('otp_user_id');
+
+    Auth::login($user, $remember);
+    $request->session()->regenerate();
+
+    ActivityLog::record('login_otp', "User {$user->name} berhasil verifikasi OTP.", $user);
+
+    return $user->hasRole('admin') || $user->isAdmin()
+        ? redirect()->intended(route('admin.dashboard'))
+        : redirect()->intended(route('dashboard.index'));
+}
 
     public function logout(Request $request)
     {
