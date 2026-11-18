@@ -115,7 +115,7 @@
 
     <section class="main-grid">
         <div class="chart-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div class="chart-card__head">
                 <h2 class="chart-card__title" style="margin: 0;">Prediksi Pasang Surut Hari Ini</h2>
                 <span id="chartLiveIndicator" style="font-size: 11px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; gap: 5px;">
                     <span style="width: 6px; height: 6px; border-radius: 50%; background: #0284c7;"></span> Auto Sync

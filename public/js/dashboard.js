@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         min: 0,
                         max: 24,
                         grid: { display: false },
-                        ticks: { stepSize: 3, callback: (v) => hhmm(v) },
+                        ticks: { stepSize: window.innerWidth < 640 ? 6 : 3, callback: (v) => hhmm(v) },
                     },
                     y: {
                         min: range.min,
