@@ -342,3 +342,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+/**
+ * Filter tanggal: baru bisa diisi setelah lokasi dipilih,
+ * dan tanggal akhir tidak boleh lebih awal dari tanggal mulai.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const lokasi = document.getElementById('lokasi');
+    const mulai = document.getElementById('tanggal_mulai');
+    const akhir = document.getElementById('tanggal_akhir');
+    const hint = document.getElementById('dateHint');
+    if (!lokasi || !mulai || !akhir) return;
+
+    function syncRange() {
+        akhir.min = mulai.value || '';
+        mulai.max = akhir.value || '';
+    }
+
+    function syncLock() {
+        const locked = lokasi.value === '';
+        [mulai, akhir].forEach((el) => {
+            el.disabled = locked;
+            if (locked) el.value = '';
+        });
+        if (hint) {
+            hint.textContent = locked ? hint.dataset.locked : hint.dataset.unlocked;
+            hint.classList.toggle('is-locked', locked);
+        }
+        syncRange();
+    }
+
+    lokasi.addEventListener('change', syncLock);
+    mulai.addEventListener('change', syncRange);
+    akhir.addEventListener('change', syncRange);
+    syncLock();
+});

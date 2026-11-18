@@ -392,9 +392,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (valTemperature) valTemperature.innerHTML = active.temperature + '&deg;C';
 
         // Side info card
-        const valUpdatedAt = document.getElementById('valUpdatedAt');
-        if (valUpdatedAt) valUpdatedAt.textContent = active.updated_at;
-
         const valLastHeight = document.getElementById('valLastHeight');
         if (valLastHeight) valLastHeight.textContent = Number(active.last_height).toFixed(1) + ' m';
 

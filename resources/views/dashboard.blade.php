@@ -150,10 +150,6 @@
                         </span>
                     </li>
                     <li class="info-list__row">
-                        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg> Update Terakhir</span>
-                        <strong id="valUpdatedAt">{{ $active['updated_at'] }}</strong>
-                    </li>
-                    <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2" stroke="currentColor" stroke-width="2"/></svg> Ketinggian Terakhir</span>
                         <strong id="valLastHeight">{{ number_format($active['last_height'], 1) }} m</strong>
                     </li>
