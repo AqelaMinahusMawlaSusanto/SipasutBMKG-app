@@ -32,6 +32,8 @@ Thumbs.db
 __pycache__/
 *.pyc
 
+backup_sipasut.sql
+
 # Views to be developed by teammate
 # /resources/views/admin/kelola-lokasi.blade.php
 # /resources/views/admin/kelola-profil.blade.php

@@ -68,7 +68,7 @@ class TideChart
         if ($hourly->count() >= 2) {
             $source = 'hourly';
             foreach ($hourly as $row) {
-                $p = ['h' => (float) $row->hour, 'v' => round($row->water_level / 100, 2)]; // cm -> meter
+                $p = ['h' => (float) $row->hour, 'v' => (float) $row->water_level]; // cm
                 $points[] = $p;
                 if ($high === null || $p['v'] > $high['v']) {
                     $high = $p;
@@ -83,8 +83,8 @@ class TideChart
 
             if ($tHigh !== null && $tLow !== null) {
                 $source   = 'estimated';
-                $hi       = (float) $prediction->high_tide_level;
-                $lo       = (float) $prediction->low_tide_level;
+                $hi       = (float) $prediction->high_tide_level * 100; // meter -> cm
+                $lo       = (float) $prediction->low_tide_level * 100;  // meter -> cm
                 $estimate = self::estimateCurve($tHigh, $hi, $tLow, $lo);
                 $points   = $estimate['points'];
                 $high     = ['h' => $tHigh, 'v' => $hi];
@@ -93,10 +93,10 @@ class TideChart
         }
 
         if ($high !== null) {
-            $high['time'] = self::formatTime($high['h']);
+            $high['time'] = ($prediction && $prediction->high_tide_time) ? $prediction->high_tide_time : self::formatTime($high['h']);
         }
         if ($low !== null) {
-            $low['time'] = self::formatTime($low['h']);
+            $low['time'] = ($prediction && $prediction->low_tide_time) ? $prediction->low_tide_time : self::formatTime($low['h']);
         }
 
         $isToday = $date === $today;
@@ -135,20 +135,37 @@ class TideChart
         return $all;
     }
 
-    /** Hari ini kalau ada; kalau tidak, tanggal terakhir yang sudah lewat; kalau semuanya di masa depan, yang paling awal. */
-    private static function pickDate(array $dates, string $today): ?string
+    /** Hari ini kalau ada; kalau tidak, tanggal terdekat dengan hari ini. */
+    public static function pickDate(array $dates, string $today): ?string
     {
         if (empty($dates)) {
             return null;
         }
 
-        $past = array_filter($dates, fn ($d) => $d <= $today);
+        if (in_array($today, $dates, true)) {
+            return $today;
+        }
 
-        return $past ? max($past) : min($dates);
+        // Cari tanggal terdekat dengan hari ini
+        $closest = null;
+        $minDiff = null;
+        $todayTs = strtotime($today);
+
+        foreach ($dates as $d) {
+            $diff = abs(strtotime($d) - $todayTs);
+            if ($minDiff === null || $diff < $minDiff) {
+                $minDiff = $diff;
+                $closest = $d;
+            } elseif ($diff === $minDiff && $d > $closest) {
+                $closest = $d;
+            }
+        }
+
+        return $closest ?? max($dates);
     }
 
     /** "05.00 WIB" atau "05:15" -> 5.0 / 5.25 (jam desimal), null kalau tidak terbaca. */
-    private static function timeToHours(?string $time): ?float
+    public static function timeToHours(?string $time): ?float
     {
         if ($time && preg_match('/(\d{1,2})[.:](\d{2})/', $time, $m)) {
             return round((int) $m[1] + ((int) $m[2]) / 60, 2);
@@ -170,7 +187,7 @@ class TideChart
      * (interpolasi cosinus antar titik ekstrem yang diulang tiap periode).
      * Ini perkiraan, bukan data pengukuran per jam.
      */
-    private static function estimateCurve(float $tHigh, float $hi, float $tLow, float $lo): array
+    public static function estimateCurve(float $tHigh, float $hi, float $tLow, float $lo): array
     {
         $period = self::PERIOD;
 

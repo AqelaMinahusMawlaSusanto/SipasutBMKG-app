@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Models\Prediction;
 use App\Models\TidalData;
 use App\Models\User;
+use App\Support\TideChart;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -114,8 +115,19 @@ class AdminController extends Controller
             $validated['low_tide_time'] = str_replace(':', '.', $validated['low_tide_time']) . ' WIB';
         }
 
+        // Jika input dalam satuan cm (misal 81 atau 110), konversi cm -> meter untuk penyimpanan
+        if (abs($validated['high_tide_level']) >= 10) {
+            $validated['high_tide_level'] = round($validated['high_tide_level'] / 100, 2);
+        }
+        if (abs($validated['low_tide_level']) >= 10) {
+            $validated['low_tide_level'] = round($validated['low_tide_level'] / 100, 2);
+        }
+
         $prediksi = Prediction::create($validated);
         $location = Location::find($validated['location_id']);
+
+        // Sinkronkan ke data per jam (TidalData) agar langsung terhubung ke grafik user
+        $this->syncTidalDataFromPrediction($prediksi);
 
         ActivityLog::record(
             'create_prediction',
@@ -146,7 +158,18 @@ class AdminController extends Controller
             $validated['low_tide_time'] = str_replace(':', '.', $validated['low_tide_time']) . ' WIB';
         }
 
+        // Jika input dalam satuan cm (misal 81 atau 110), konversi cm -> meter untuk penyimpanan
+        if (abs($validated['high_tide_level']) >= 10) {
+            $validated['high_tide_level'] = round($validated['high_tide_level'] / 100, 2);
+        }
+        if (abs($validated['low_tide_level']) >= 10) {
+            $validated['low_tide_level'] = round($validated['low_tide_level'] / 100, 2);
+        }
+
         $prediksi->update($validated);
+
+        // Perbarui data per jam (TidalData) yang terhubung ke grafik user
+        $this->syncTidalDataFromPrediction($prediksi);
 
         ActivityLog::record(
             'update_prediction',
@@ -161,6 +184,11 @@ class AdminController extends Controller
         $prediksi = Prediction::findOrFail($id);
         $locName = $prediksi->location->name ?? 'Lokasi';
         $date = $prediksi->record_date->format('d/m/Y');
+
+        // Hapus juga data per jam terkait
+        TidalData::where('location_id', $prediksi->location_id)
+            ->whereDate('record_date', $prediksi->record_date)
+            ->delete();
 
         $prediksi->delete();
 
@@ -209,6 +237,47 @@ class AdminController extends Controller
         );
 
         return redirect()->route('admin.data')->with('success', "Berhasil menghapus {$count} data prediksi pasang surut.");
+    }
+
+    /**
+     * Menghubungkan dan menyinkronkan data prediksi manual ke data per jam (TidalData)
+     * agar kurva grafik, kalender, dan halaman unduhan di sisi user langsung terupdate akurat.
+     */
+    private function syncTidalDataFromPrediction(Prediction $prediksi): void
+    {
+        $tHigh = TideChart::timeToHours($prediksi->high_tide_time) ?? 6.0;
+        $tLow  = TideChart::timeToHours($prediksi->low_tide_time) ?? 18.0;
+        $hi    = (float) $prediksi->high_tide_level * 100; // meter -> cm
+        $lo    = (float) $prediksi->low_tide_level * 100;  // meter -> cm
+
+        $estimate = TideChart::estimateCurve($tHigh, $hi, $tLow, $lo);
+        $hourlyMap = [];
+        foreach ($estimate['points'] as $p) {
+            $h = (int) $p['h'];
+            if ($p['h'] == $h && $h >= 0 && $h < 24 && !isset($hourlyMap[$h])) {
+                $hourlyMap[$h] = (int) round($p['v']); // already in cm
+            }
+        }
+
+        // Hapus data per jam lama untuk lokasi dan tanggal yang sama
+        TidalData::where('location_id', $prediksi->location_id)
+            ->whereDate('record_date', $prediksi->record_date)
+            ->delete();
+
+        $rows = [];
+        $recordDateStr = $prediksi->record_date->format('Y-m-d');
+        for ($h = 0; $h < 24; $h++) {
+            $rows[] = [
+                'location_id' => $prediksi->location_id,
+                'record_date' => $recordDateStr,
+                'hour'        => $h,
+                'water_level' => $hourlyMap[$h] ?? (int) round($hi),
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ];
+        }
+
+        TidalData::insert($rows);
     }
 
     public function storeDataUpload(Request $request)
@@ -409,6 +478,7 @@ class AdminController extends Controller
             $pythonBin = 'python';
             $candidates = [
                 'C:\\Users\\minah\\AppData\\Local\\Python\\bin\\python.exe',
+                'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python315\\python.exe',
                 'C:\\laragon\\bin\\python\\python.exe',
                 'python3',
                 'py',
@@ -460,15 +530,8 @@ class AdminController extends Controller
         }
 
         if (empty($records)) {
-            // Jika membaca PDF/Excel rumit tanpa python aktif, buat simulasi realistis dari nama file
-            for ($d = 1; $d <= 31; $d++) {
-                for ($h = 1; $h <= 24; $h++) {
-                    $lvl = (int)round(110 * sin(($h / 12) * 2 * M_PI - 1.2) + 30 * sin(($h / 6) * M_PI));
-                    $records[] = ['day' => $d, 'hour' => $h, 'water_level' => $lvl];
-                    $levels[] = $lvl;
-                }
-            }
-        }
+    return ['error' => 'Parser Python gagal membaca file. Periksa instalasi Python/pdfplumber.'];
+}
 
         $predictions = [];
         $byDay = [];

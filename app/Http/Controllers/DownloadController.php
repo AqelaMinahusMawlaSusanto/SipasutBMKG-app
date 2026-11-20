@@ -32,7 +32,8 @@ class DownloadController extends Controller
         return Location::where('is_active', true)
             ->orderBy('name')
             ->get()
-            ->map(function (Location $loc) {
+            ->map(function ($loc) {
+                /** @var Location $loc */
                 $status = $loc->predictions()
                     ->orderByDesc('record_date')
                     ->orderByDesc('id')
@@ -70,11 +71,24 @@ class DownloadController extends Controller
             $query->where('status', ucfirst(strtolower($status)));
         }
 
-        if ($mulai = $this->validDate($request->query('tanggal_mulai'))) {
+        // Tanggal baru berlaku setelah lokasi dipilih (urutan: lokasi -> tanggal).
+        $mulai = null;
+        $akhir = null;
+        if (is_string($lokasi) && $lokasi !== '') {
+            $mulai = $this->validDate($request->query('tanggal_mulai'));
+            $akhir = $this->validDate($request->query('tanggal_akhir'));
+
+            // Kalau terbalik, tukar supaya rentang tetap valid.
+            if ($mulai && $akhir && $akhir < $mulai) {
+                [$mulai, $akhir] = [$akhir, $mulai];
+            }
+        }
+
+        if ($mulai) {
             $query->whereDate('record_date', '>=', $mulai);
         }
 
-        if ($akhir = $this->validDate($request->query('tanggal_akhir'))) {
+        if ($akhir) {
             $query->whereDate('record_date', '<=', $akhir);
         }
 
@@ -96,9 +110,9 @@ class DownloadController extends Controller
             'lokasi_slug'   => strtolower($p->location->code ?? ''),
             'tanggal'       => $p->record_date->locale('id')->translatedFormat('d F Y'),
             'jam_pasang'    => $p->high_tide_time,
-            'tinggi_pasang' => $p->high_tide_level,
+            'tinggi_pasang' => round((float) $p->high_tide_level, 2),
             'jam_surut'     => $p->low_tide_time,
-            'tinggi_surut'  => $p->low_tide_level,
+            'tinggi_surut'  => round((float) $p->low_tide_level, 2),
             'status'        => strtolower($p->status),
             'update'        => $p->updated_at
                 ? $p->updated_at->copy()->timezone('Asia/Jakarta')->format('H.i') . ' WIB'
@@ -225,7 +239,7 @@ class DownloadController extends Controller
         if ($hourly->count() >= 2) {
             $source = 'hourly';
             foreach ($hourly as $row) {
-                $p = ['h' => (float) $row->hour, 'v' => round($row->water_level / 100, 2)]; // cm -> meter
+                $p = ['h' => (float) $row->hour, 'v' => (float) $row->water_level]; // cm
                 $points[] = $p;
                 if ($high === null || $p['v'] > $high['v']) {
                     $high = $p;
@@ -240,8 +254,8 @@ class DownloadController extends Controller
 
             if ($tHigh !== null && $tLow !== null) {
                 $source   = 'estimated';
-                $hi       = (float) $anchor->high_tide_level;
-                $lo       = (float) $anchor->low_tide_level;
+                $hi       = (float) $anchor->high_tide_level * 100; // meter -> cm
+                $lo       = (float) $anchor->low_tide_level * 100;  // meter -> cm
                 $estimate = $this->estimateCurve($tHigh, $hi, $tLow, $lo);
                 $points   = $estimate['points'];
                 $high     = ['h' => $tHigh, 'v' => $hi];
@@ -266,10 +280,10 @@ class DownloadController extends Controller
             ->whereDate('record_date', '>=', $date->copy()->subDays(6)->toDateString())
             ->orderBy('record_date')
             ->get()
-            ->map(fn (Prediction $p) => [
+            ->map(fn ($p) => [
                 'd'  => $p->record_date->format('d/m'),
-                'hi' => (float) $p->high_tide_level,
-                'lo' => (float) $p->low_tide_level,
+                'hi' => round((float) $p->high_tide_level * 100),
+                'lo' => round((float) $p->low_tide_level * 100),
             ])
             ->all();
 
@@ -329,7 +343,7 @@ class DownloadController extends Controller
         return response()->streamDownload(function () use ($items) {
             $out = fopen('php://output', 'w');
 
-            fputcsv($out, ['No', 'Lokasi', 'Tanggal', 'Jam Pasang', 'Tinggi Pasang (m)', 'Jam Surut', 'Tinggi Surut (m)', 'Status', 'Update']);
+            fputcsv($out, ['No', 'Lokasi', 'Tanggal', 'Jam Pasang', 'Tinggi Pasang (cm)', 'Jam Surut', 'Tinggi Surut (cm)', 'Status', 'Update']);
 
             foreach ($items as $i => $p) {
                 $r = $this->toRow($p, $i + 1);

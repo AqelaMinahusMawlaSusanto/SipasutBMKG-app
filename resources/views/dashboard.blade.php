@@ -2,6 +2,36 @@
 
 @section('title', 'Dashboard - BMKG Monitoring Pasang Surut')
 
+@php
+    /** @var \App\Models\Notification|null $notification */
+    /** @var array $locations */
+    /** @var string $selected */
+    /** @var array $active */
+    $notification = $notification ?? null;
+    $locations = $locations ?? [];
+    $selected = $selected ?? 'surabaya-timur';
+    $active = $active ?? ($locations[$selected] ?? [
+        'label' => 'Surabaya Timur',
+        'status' => 'aman',
+        'status_label' => 'AMAN',
+        'status_desc' => 'Kondisi Normal',
+        'current_tide' => 2.3,
+        'current_time' => '12.00 WIB',
+        'wind_speed' => 12,
+        'wind_dir' => 'Timur Laut',
+        'weather' => 'Cerah',
+        'temperature' => 31,
+        'updated_at' => now()->format('d/m/Y, H.i') . ' WIB',
+        'last_height' => 2.3,
+        'coordinate' => '-7.2498, 112.7351',
+        'warning_title' => 'Tidak ada peringatan pasang tinggi.',
+        'warning_desc' => 'Kondisi aman untuk aktivitas di wilayah perairan.',
+        'chart' => ['points' => [], 'high' => null, 'low' => null],
+        'next_high' => ['value' => 0.0, 'time' => '-'],
+        'kabupaten' => 'Surabaya, Jawa Timur',
+    ]);
+@endphp
+
 @section('content')
 
     {{-- Banner Notifikasi Peringatan Dinamis dari Admin --}}
@@ -68,7 +98,7 @@
             </span>
             <div>
                 <p class="stat-card__label">Pasang Saat Ini</p>
-                <p class="stat-card__value" id="valCurrentTide">{{ number_format($active['current_tide'], 1) }} m</p>
+                <p class="stat-card__value" id="valCurrentTide">{{ number_format($active['current_tide'], 2) }} m</p>
                 <p class="stat-card__meta" id="valCurrentTime">{{ $active['current_time'] }}</p>
             </div>
         </div>
@@ -115,7 +145,7 @@
 
     <section class="main-grid">
         <div class="chart-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div class="chart-card__head">
                 <h2 class="chart-card__title" style="margin: 0;">Prediksi Pasang Surut Hari Ini</h2>
                 <span id="chartLiveIndicator" style="font-size: 11px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; gap: 5px;">
                     <span style="width: 6px; height: 6px; border-radius: 50%; background: #0284c7;"></span> Auto Sync
@@ -132,7 +162,7 @@
                     @elseif ($active['status'] === 'waspada')
                         Prediksi pasang tinggi diperkirakan terjadi pada pukul {{ $active['next_high']['time'] }}
                     @else
-                        Prediksi pasang tertinggi berikutnya {{ number_format($active['next_high']['value'], 1) }} m pada pukul {{ $active['next_high']['time'] }}
+                        Prediksi pasang tertinggi berikutnya {{ number_format($active['next_high']['value'], 2) }} m pada pukul {{ $active['next_high']['time'] }}
                     @endif
                 </span>
             </p>
@@ -150,12 +180,8 @@
                         </span>
                     </li>
                     <li class="info-list__row">
-                        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg> Update Terakhir</span>
-                        <strong id="valUpdatedAt">{{ $active['updated_at'] }}</strong>
-                    </li>
-                    <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2" stroke="currentColor" stroke-width="2"/></svg> Ketinggian Terakhir</span>
-                        <strong id="valLastHeight">{{ number_format($active['last_height'], 1) }} m</strong>
+                        <strong id="valLastHeight">{{ number_format($active['last_height'], 2) }} m</strong>
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z" stroke="currentColor" stroke-width="2"/></svg> Koordinat</span>
@@ -181,10 +207,13 @@
         </div>
     </section>
 
-    {{-- Data dikirim ke JS supaya dropdown & chart bisa langsung update tanpa reload halaman --}}
+    {{-- Data dikirim ke JS secara aman tanpa trigger error sintaks di VS Code --}}
+    <script id="tideLocationsData" type="application/json">
+        {!! json_encode($locations) !!}
+    </script>
     <script>
-        window.TIDE_DATA = @json($locations);
-        window.SELECTED_LOCATION = @json($selected);
+        window.TIDE_DATA = JSON.parse(document.getElementById('tideLocationsData').textContent || '{}');
+        window.SELECTED_LOCATION = "{{ $selected }}";
         window.REALTIME_URL = "{{ route('dashboard.realtime') }}";
     </script>
     <script src="{{ asset('js/dashboard.js') }}"></script>

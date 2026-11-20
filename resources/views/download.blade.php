@@ -25,12 +25,31 @@
                     </select>
                 </div>
 
-                <div class="filter-field filter-field--dates">
-                    <label>Tanggal</label>
+                @php $punyaLokasi = ! empty($filters['lokasi'] ?? ''); @endphp
+                <div class="filter-field filter-field--dates" id="dateField">
                     <div class="filter-field__row">
-                        <input type="date" name="tanggal_mulai" value="{{ $filters['tanggal_mulai'] ?? '' }}" placeholder="Tanggal Mulai">
-                        <input type="date" name="tanggal_akhir" value="{{ $filters['tanggal_akhir'] ?? '' }}" placeholder="Tanggal Akhir">
+                        <div class="date-input">
+                            <label for="tanggal_mulai">Tanggal Mulai</label>
+                            <input type="date" name="tanggal_mulai" id="tanggal_mulai"
+                                   value="{{ $punyaLokasi ? ($filters['tanggal_mulai'] ?? '') : '' }}"
+                                   max="{{ $filters['tanggal_akhir'] ?? '' }}"
+                                   @disabled(! $punyaLokasi)>
+                        </div>
+                        <div class="date-input">
+                            <label for="tanggal_akhir">Tanggal Akhir</label>
+                            <input type="date" name="tanggal_akhir" id="tanggal_akhir"
+                                   value="{{ $punyaLokasi ? ($filters['tanggal_akhir'] ?? '') : '' }}"
+                                   min="{{ $filters['tanggal_mulai'] ?? '' }}"
+                                   @disabled(! $punyaLokasi)>
+                        </div>
                     </div>
+                    <small class="filter-field__hint {{ $punyaLokasi ? '' : 'is-locked' }}" id="dateHint"
+                           data-locked="Pilih lokasi terlebih dahulu untuk mengisi tanggal."
+                           data-unlocked="Tanggal akhir tidak boleh lebih awal dari tanggal mulai.">
+                        {{ $punyaLokasi
+                            ? 'Tanggal akhir tidak boleh lebih awal dari tanggal mulai.'
+                            : 'Pilih lokasi terlebih dahulu untuk mengisi tanggal.' }}
+                    </small>
                 </div>
 
                 <div class="filter-field">
@@ -126,15 +145,15 @@
                 <tbody>
                     @forelse ($rows as $r)
                         <tr>
-                            <td>{{ $r['no'] }}</td>
-                            <td>{{ $r['lokasi'] }}</td>
-                            <td>{{ $r['tanggal'] }}</td>
-                            <td>{{ $r['jam_pasang'] }}</td>
-                            <td class="text-blue">{{ number_format($r['tinggi_pasang'], 2) }} m</td>
-                            <td>{{ $r['jam_surut'] }}</td>
-                            <td class="text-blue">{{ number_format($r['tinggi_surut'], 2) }} m</td>
-                            <td><span class="badge badge--{{ $r['status'] }}">{{ ucfirst($r['status']) }}</span></td>
-                            <td>{{ $r['update'] }}</td>
+                            <td data-label="No">{{ $r['no'] }}</td>
+                            <td data-label="Lokasi">{{ $r['lokasi'] }}</td>
+                            <td data-label="Tanggal">{{ $r['tanggal'] }}</td>
+                            <td data-label="Jam Pasang">{{ $r['jam_pasang'] }}</td>
+                            <td class="text-blue" data-label="Tinggi Pasang">{{ number_format($r['tinggi_pasang'], 2) }} m</td>
+                            <td data-label="Jam Surut">{{ $r['jam_surut'] }}</td>
+                            <td class="text-blue" data-label="Tinggi Surut">{{ number_format($r['tinggi_surut'], 2) }} m</td>
+                            <td data-label="Status"><span class="badge badge--{{ $r['status'] }}">{{ ucfirst($r['status']) }}</span></td>
+                            <td data-label="Update">{{ $r['update'] }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="9" class="table-empty">Tidak ada data untuk filter ini.</td></tr>
