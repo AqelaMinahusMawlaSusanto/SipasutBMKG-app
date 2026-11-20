@@ -2,6 +2,36 @@
 
 @section('title', 'Dashboard - BMKG Monitoring Pasang Surut')
 
+@php
+    /** @var \App\Models\Notification|null $notification */
+    /** @var array $locations */
+    /** @var string $selected */
+    /** @var array $active */
+    $notification = $notification ?? null;
+    $locations = $locations ?? [];
+    $selected = $selected ?? 'surabaya-timur';
+    $active = $active ?? ($locations[$selected] ?? [
+        'label' => 'Surabaya Timur',
+        'status' => 'aman',
+        'status_label' => 'AMAN',
+        'status_desc' => 'Kondisi Normal',
+        'current_tide' => 2.3,
+        'current_time' => '12.00 WIB',
+        'wind_speed' => 12,
+        'wind_dir' => 'Timur Laut',
+        'weather' => 'Cerah',
+        'temperature' => 31,
+        'updated_at' => now()->format('d/m/Y, H.i') . ' WIB',
+        'last_height' => 2.3,
+        'coordinate' => '-7.2498, 112.7351',
+        'warning_title' => 'Tidak ada peringatan pasang tinggi.',
+        'warning_desc' => 'Kondisi aman untuk aktivitas di wilayah perairan.',
+        'chart' => ['points' => [], 'high' => null, 'low' => null],
+        'next_high' => ['value' => 0.0, 'time' => '-'],
+        'kabupaten' => 'Surabaya, Jawa Timur',
+    ]);
+@endphp
+
 @section('content')
 
     {{-- Banner Notifikasi Peringatan Dinamis dari Admin --}}
@@ -181,10 +211,13 @@
         </div>
     </section>
 
-    {{-- Data dikirim ke JS supaya dropdown & chart bisa langsung update tanpa reload halaman --}}
+    {{-- Data dikirim ke JS secara aman tanpa trigger error sintaks di VS Code --}}
+    <script id="tideLocationsData" type="application/json">
+        {!! json_encode($locations) !!}
+    </script>
     <script>
-        window.TIDE_DATA = @json($locations);
-        window.SELECTED_LOCATION = @json($selected);
+        window.TIDE_DATA = JSON.parse(document.getElementById('tideLocationsData').textContent || '{}');
+        window.SELECTED_LOCATION = "{{ $selected }}";
         window.REALTIME_URL = "{{ route('dashboard.realtime') }}";
     </script>
     <script src="{{ asset('js/dashboard.js') }}"></script>

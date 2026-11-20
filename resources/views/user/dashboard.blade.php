@@ -2,6 +2,12 @@
 
 @section('title', 'Dashboard')
 
+@php
+    $notifications = $notifications ?? collect([]);
+    $currentHour = $currentHour ?? now()->hour;
+    $locationCards = $locationCards ?? [];
+@endphp
+
 @section('content')
 <div class="space-y-6">
 
@@ -18,10 +24,10 @@
             </p>
 
             <div class="flex flex-wrap gap-3 mt-6">
-                <a href="{{ route('user.kondisi') }}" class="px-5 py-2.5 rounded-xl bg-white text-sky-800 font-bold text-xs hover:bg-sky-50 shadow-md transition">
+                <a href="{{ Route::has('user.kondisi') ? route('user.kondisi') : url('/dashboard') }}" class="px-5 py-2.5 rounded-xl bg-white text-sky-800 font-bold text-xs hover:bg-sky-50 shadow-md transition">
                     Lihat Grafik Detail &rarr;
                 </a>
-                <a href="{{ route('user.monitoring') }}" class="px-5 py-2.5 rounded-xl bg-sky-500/30 hover:bg-sky-500/40 text-white font-semibold text-xs border border-white/20 backdrop-blur-sm transition">
+                <a href="{{ Route::has('user.monitoring') ? route('user.monitoring') : url('/lokasi') }}" class="px-5 py-2.5 rounded-xl bg-sky-500/30 hover:bg-sky-500/40 text-white font-semibold text-xs border border-white/20 backdrop-blur-sm transition">
                     Buka Peta Interaktif
                 </a>
             </div>
@@ -74,7 +80,7 @@
                 <h2 class="text-lg font-bold text-slate-900">Status 5 Titik Pengamatan</h2>
                 <p class="text-xs text-slate-500">Ketinggian air laut relatif terhadap Mean Sea Level (MSL) jam {{ $currentHour }}:00</p>
             </div>
-            <a href="{{ route('user.kondisi') }}" class="text-xs font-semibold text-sky-600 hover:text-sky-700">Lihat Semua Grafik &rarr;</a>
+            <a href="{{ Route::has('user.kondisi') ? route('user.kondisi') : url('/dashboard') }}" class="text-xs font-semibold text-sky-600 hover:text-sky-700">Lihat Semua Grafik &rarr;</a>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -133,11 +139,11 @@
 
                     <!-- Footer Card Button -->
                     <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <a href="{{ route('user.kondisi', ['location_id' => $card['id']]) }}" class="font-semibold text-sky-600 hover:underline flex items-center gap-1">
+                        <a href="{{ Route::has('user.kondisi') ? route('user.kondisi', ['location_id' => $card['id']]) : url('/dashboard') }}" class="font-semibold text-sky-600 hover:underline flex items-center gap-1">
                             <span>Grafik Lengkap</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
-                        <a href="{{ route('user.monitoring') }}" class="text-slate-400 hover:text-slate-600">
+                        <a href="{{ Route::has('user.monitoring') ? route('user.monitoring') : url('/lokasi') }}" class="text-slate-400 hover:text-slate-600">
                             Peta Lokasi &rarr;
                         </a>
                     </div>
@@ -183,9 +189,12 @@
 @endsection
 
 @push('scripts')
+<script id="userDashboardCardsData" type="application/json">
+    {!! json_encode($locationCards) !!}
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const cardsData = @json($locationCards);
+        const cardsData = JSON.parse(document.getElementById('userDashboardCardsData').textContent || '[]');
 
         cardsData.forEach(function(card) {
             const el = document.getElementById('sparkline-' + card.id);
