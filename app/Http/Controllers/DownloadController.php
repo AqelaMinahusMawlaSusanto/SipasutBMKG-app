@@ -32,7 +32,8 @@ class DownloadController extends Controller
         return Location::where('is_active', true)
             ->orderBy('name')
             ->get()
-            ->map(function (Location $loc) {
+            ->map(function ($loc) {
+                /** @var Location $loc */
                 $status = $loc->predictions()
                     ->orderByDesc('record_date')
                     ->orderByDesc('id')
@@ -70,11 +71,24 @@ class DownloadController extends Controller
             $query->where('status', ucfirst(strtolower($status)));
         }
 
-        if ($mulai = $this->validDate($request->query('tanggal_mulai'))) {
+        // Tanggal baru berlaku setelah lokasi dipilih (urutan: lokasi -> tanggal).
+        $mulai = null;
+        $akhir = null;
+        if (is_string($lokasi) && $lokasi !== '') {
+            $mulai = $this->validDate($request->query('tanggal_mulai'));
+            $akhir = $this->validDate($request->query('tanggal_akhir'));
+
+            // Kalau terbalik, tukar supaya rentang tetap valid.
+            if ($mulai && $akhir && $akhir < $mulai) {
+                [$mulai, $akhir] = [$akhir, $mulai];
+            }
+        }
+
+        if ($mulai) {
             $query->whereDate('record_date', '>=', $mulai);
         }
 
-        if ($akhir = $this->validDate($request->query('tanggal_akhir'))) {
+        if ($akhir) {
             $query->whereDate('record_date', '<=', $akhir);
         }
 
@@ -266,7 +280,7 @@ class DownloadController extends Controller
             ->whereDate('record_date', '>=', $date->copy()->subDays(6)->toDateString())
             ->orderBy('record_date')
             ->get()
-            ->map(fn (Prediction $p) => [
+            ->map(fn ($p) => [
                 'd'  => $p->record_date->format('d/m'),
                 'hi' => (float) $p->high_tide_level,
                 'lo' => (float) $p->low_tide_level,

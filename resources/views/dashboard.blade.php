@@ -145,7 +145,7 @@
 
     <section class="main-grid">
         <div class="chart-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div class="chart-card__head">
                 <h2 class="chart-card__title" style="margin: 0;">Prediksi Pasang Surut Hari Ini</h2>
                 <span id="chartLiveIndicator" style="font-size: 11px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; gap: 5px;">
                     <span style="width: 6px; height: 6px; border-radius: 50%; background: #0284c7;"></span> Auto Sync
@@ -178,10 +178,6 @@
                             <strong id="valInfoLabel">{{ $active['label'] }}</strong>
                             <small id="valInfoKab">{{ $active['kabupaten'] }}</small>
                         </span>
-                    </li>
-                    <li class="info-list__row">
-                        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg> Update Terakhir</span>
-                        <strong id="valUpdatedAt">{{ $active['updated_at'] }}</strong>
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2" stroke="currentColor" stroke-width="2"/></svg> Ketinggian Terakhir</span>
