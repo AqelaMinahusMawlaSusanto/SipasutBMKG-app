@@ -212,7 +212,7 @@ class AdminController extends Controller
     }
 
     public function storeDataUpload(Request $request)
-    {
+    {python python_service\cli_parser.py "storage\app\public\uploads\tidal\1793193041_10.1. SBYTIM oktober2026.pdf"
         $request->validate([
             'location_id' => 'required|exists:locations,id',
             'period_month' => 'nullable|integer|between:1,12',

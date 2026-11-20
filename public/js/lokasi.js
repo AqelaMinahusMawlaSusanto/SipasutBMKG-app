@@ -8,10 +8,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    // Hanya dua status: normal (hijau) dan waspada (oranye).
+    // pasang & surut dibiarkan sebagai alias supaya data lama tetap aman.
     var STATUS_COLOR = {
-        tinggi: '#dc2626',
         normal: '#16a34a',
-        rendah: '#2563eb',
+        waspada: '#f97316',
+        pasang: '#f97316',
+        surut: '#f97316',
     };
 
     // ---------- Fungsi bantu ----------
@@ -133,10 +136,6 @@ document.addEventListener('DOMContentLoaded', function () {
             meliputi.textContent = tampil ? 'Meliputi: ' + names.join(', ') : '';
             meliputi.hidden = !tampil;
         }
-
-        var badge = document.getElementById('detailBadge');
-        badge.textContent = loc.status_label;
-        badge.className = 'badge badge--' + loc.status;
     }
 
     function selectLocation(slug, opts) {
