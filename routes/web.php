@@ -35,6 +35,7 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 Route::get('/otp', [AuthController::class, 'showOtp'])->name('otp.show');
 Route::post('/otp', [AuthController::class, 'verifyOtp'])->name('otp.verify');
+Route::post('/otp/resend', [AuthController::class, 'resendOtp'])->name('otp.resend');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 // =====================================

@@ -24,5 +24,16 @@
 
             <button type="submit" class="btn">Verifikasi</button>
         </form>
+
+         <form method="POST" action="{{ route('otp.resend') }}" style="margin-top:12px; text-align:center;">
+            @csrf
+            <button type="submit" class="btn" style="background:none; color:#1d4ed8; box-shadow:none;">
+                Kirim ulang kode
+            </button>
+        </form>
+
+        <p class="card-foot">
+            <a href="{{ route('login') }}">Kembali ke halaman login</a>
+        </p>
     </div>
 </x-guest-layout>

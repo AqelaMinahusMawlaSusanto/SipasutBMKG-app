@@ -129,10 +129,24 @@ public function verifyOtp(Request $request)
     }
 
     if (! Hash::check($request->code, $user->otp_code)) {
-        return back()->withErrors(['code' => 'Kode OTP salah.']);
+    $attempts = $request->session()->get('otp_attempts', 0) + 1;
+    $request->session()->put('otp_attempts', $attempts);
+
+    if ($attempts >= 3) {
+        $user->update(['otp_code' => null, 'otp_expires_at' => null]);
+        $request->session()->forget(['otp_user_id', 'otp_attempts', 'otp_remember']);
+
+        return redirect()->route('login')
+            ->withErrors(['email' => 'Terlalu banyak kode salah. Silakan login ulang.']);
+    }
+
+    return back()->withErrors([
+        'code' => 'Kode OTP salah. Sisa percobaan: ' . (3 - $attempts) . 'x.',
+    ]);
     }
 
     $user->update(['otp_code' => null, 'otp_expires_at' => null]);
+    $request->session()->forget('otp_attempts');
 
     $remember = $request->session()->pull('otp_remember', false);
     $request->session()->forget('otp_user_id');
@@ -145,6 +159,28 @@ public function verifyOtp(Request $request)
     return $user->hasRole('admin') || $user->isAdmin()
         ? redirect()->intended(route('admin.dashboard'))
         : redirect()->intended(route('dashboard.index'));
+}
+
+public function resendOtp(Request $request)
+{
+    $userId = $request->session()->get('otp_user_id');
+    $user = $userId ? User::find($userId) : null;
+
+    if (! $user) {
+        return redirect()->route('login');
+    }
+
+    $code = (string) random_int(100000, 999999);
+
+    $user->update([
+        'otp_code' => Hash::make($code),
+        'otp_expires_at' => now()->addMinutes(5),
+    ]);
+
+    $request->session()->forget('otp_attempts');
+    Mail::to($user->email)->send(new OtpMail($code));
+
+    return back()->with('status', 'Kode OTP baru sudah dikirim ke email kamu.');
 }
 
     public function logout(Request $request)
