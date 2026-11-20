@@ -115,6 +115,14 @@ class AdminController extends Controller
             $validated['low_tide_time'] = str_replace(':', '.', $validated['low_tide_time']) . ' WIB';
         }
 
+        // Jika input dalam satuan cm (misal 81 atau 110), konversi cm -> meter untuk penyimpanan
+        if (abs($validated['high_tide_level']) >= 10) {
+            $validated['high_tide_level'] = round($validated['high_tide_level'] / 100, 2);
+        }
+        if (abs($validated['low_tide_level']) >= 10) {
+            $validated['low_tide_level'] = round($validated['low_tide_level'] / 100, 2);
+        }
+
         $prediksi = Prediction::create($validated);
         $location = Location::find($validated['location_id']);
 
@@ -148,6 +156,14 @@ class AdminController extends Controller
         }
         if (!str_contains($validated['low_tide_time'], 'WIB')) {
             $validated['low_tide_time'] = str_replace(':', '.', $validated['low_tide_time']) . ' WIB';
+        }
+
+        // Jika input dalam satuan cm (misal 81 atau 110), konversi cm -> meter untuk penyimpanan
+        if (abs($validated['high_tide_level']) >= 10) {
+            $validated['high_tide_level'] = round($validated['high_tide_level'] / 100, 2);
+        }
+        if (abs($validated['low_tide_level']) >= 10) {
+            $validated['low_tide_level'] = round($validated['low_tide_level'] / 100, 2);
         }
 
         $prediksi->update($validated);
@@ -231,15 +247,15 @@ class AdminController extends Controller
     {
         $tHigh = TideChart::timeToHours($prediksi->high_tide_time) ?? 6.0;
         $tLow  = TideChart::timeToHours($prediksi->low_tide_time) ?? 18.0;
-        $hi    = (float) $prediksi->high_tide_level;
-        $lo    = (float) $prediksi->low_tide_level;
+        $hi    = (float) $prediksi->high_tide_level * 100; // meter -> cm
+        $lo    = (float) $prediksi->low_tide_level * 100;  // meter -> cm
 
         $estimate = TideChart::estimateCurve($tHigh, $hi, $tLow, $lo);
         $hourlyMap = [];
         foreach ($estimate['points'] as $p) {
             $h = (int) $p['h'];
             if ($p['h'] == $h && $h >= 0 && $h < 24 && !isset($hourlyMap[$h])) {
-                $hourlyMap[$h] = (int) round($p['v'] * 100); // meter -> cm
+                $hourlyMap[$h] = (int) round($p['v']); // already in cm
             }
         }
 
@@ -255,7 +271,7 @@ class AdminController extends Controller
                 'location_id' => $prediksi->location_id,
                 'record_date' => $recordDateStr,
                 'hour'        => $h,
-                'water_level' => $hourlyMap[$h] ?? (int) round($hi * 100),
+                'water_level' => $hourlyMap[$h] ?? (int) round($hi),
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ];
@@ -461,6 +477,7 @@ class AdminController extends Controller
             // Cari binary Python yang valid di sistem
             $pythonBin = 'python';
             $candidates = [
+                'C:\\Users\\minah\\AppData\\Local\\Python\\bin\\python.exe',
                 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python315\\python.exe',
                 'C:\\laragon\\bin\\python\\python.exe',
                 'python3',

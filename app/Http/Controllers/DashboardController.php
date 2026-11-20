@@ -85,17 +85,17 @@ class DashboardController extends Controller
             };
 
             // Data kondisi saat ini.
-            // Nilai 2.3 merupakan nilai tampilan default,
+            // Nilai 230 merupakan nilai tampilan default (cm),
             // bukan data pengukuran aktual.
             $currentTide = $latestPrediction
-                ? (float) $latestPrediction->high_tide_level
-                : 2.3;
+                ? round((float) $latestPrediction->high_tide_level, 2)
+                : 2.30;
 
             $currentTime = now()->format('H.i') . ' WIB';
 
             $lastHeight = $latestPrediction
-                ? (float) $latestPrediction->high_tide_level
-                : 2.3;
+                ? round((float) $latestPrediction->high_tide_level, 2)
+                : 2.30;
 
             if ($latestPrediction && $latestPrediction->updated_at) {
                 $updatedAt = $latestPrediction->updated_at
@@ -128,7 +128,7 @@ class DashboardController extends Controller
                 ?? ($latestPrediction ? $latestPrediction->high_tide_time : '-');
 
             $nextHighVal = $chart['high']['v']
-                ?? ($latestPrediction ? (float) $latestPrediction->high_tide_level : 0.0);
+                ?? ($latestPrediction ? round((float) $latestPrediction->high_tide_level, 2) : 0);
 
             // Nama kabupaten/wilayah.
             $name = strtolower($loc->name);
@@ -187,20 +187,20 @@ class DashboardController extends Controller
                 'status'         => 'aman',
                 'status_label'   => 'AMAN',
                 'status_desc'    => 'Kondisi Normal',
-                'current_tide'   => 2.3,
+                'current_tide'   => 230,
                 'current_time'   => '15.30 WIB',
                 'wind_speed'     => 12,
                 'wind_dir'       => 'Timur Laut',
                 'weather'        => 'Cerah',
                 'temperature'    => 31,
                 'updated_at'     => '18/08/2026, 18.30 WIB',
-                'last_height'    => 2.3,
+                'last_height'    => 230,
                 'coordinate'     => '-7.2498, 112.7351',
                 'warning_title'  => 'Tidak ada peringatan pasang tinggi.',
                 'warning_desc'   => 'Kondisi aman untuk aktivitas di wilayah perairan.',
                 'chart'          => TideChart::emptyChart(),
                 'next_high'      => [
-                    'value' => 0.0,
+                    'value' => 0,
                     'time'  => '-',
                 ],
             ],

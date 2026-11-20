@@ -29,11 +29,11 @@ function valueAt(points, h) {
     return points[points.length - 1].v;
 }
 
-// Batas sumbu Y mengikuti data, dibulatkan ke 0,5 dengan sedikit ruang untuk label
+// Batas sumbu Y mengikuti data, dibulatkan ke kelipatan 50 cm
 function yRange(values) {
     const lo = Math.min(...values);
     const hi = Math.max(...values);
-    return { min: Math.floor((lo - 0.3) * 2) / 2, max: Math.ceil((hi + 0.3) * 2) / 2 };
+    return { min: Math.floor((lo - 30) / 50) * 50, max: Math.ceil((hi + 30) / 50) * 50 };
 }
 
 // Menggambar label nilai, garis putus-putus, dan badge jam di bawah sumbu X
@@ -65,7 +65,7 @@ function makeMarkerPlugin(markers) {
                 ctx.textAlign = 'center';
                 ctx.fillStyle = m.color;
                 const prefix = { high: 'Pasang ', low: 'Surut ', now: 'Saat ini ' }[m.kind] || '';
-                const text = prefix + m.v.toFixed(2) + ' m';
+                const text = prefix + Math.round(m.v) + ' cm';
                 ctx.fillText(text, x, m.kind === 'low' ? y + 20 : y - 12);
 
                 // titik untuk penanda "saat ini"
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tooltip: {
                         callbacks: {
                             title: (items) => hhmm(items[0].parsed.x) + ' WIB',
-                            label: (item) => item.parsed.y.toFixed(2) + ' m',
+                            label: (item) => Math.round(item.parsed.y) + ' cm',
                         },
                     },
                 },
@@ -158,8 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     y: {
                         min: range.min,
                         max: range.max,
-                        title: { display: true, text: 'Tinggi (m)', color: '#94a3b8', font: { size: 11 } },
-                        ticks: { stepSize: 0.5 },
+                        title: { display: true, text: 'Tinggi (cm)', color: '#94a3b8', font: { size: 11 } },
+                        ticks: { stepSize: 50 },
                         grid: { color: '#f1f5f9' },
                     },
                 },
@@ -187,15 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 layout: { padding: { top: 8, bottom: 8 } },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: (item) => item.dataset.label + ': ' + item.parsed.y.toFixed(2) + ' m' } },
+                    tooltip: { callbacks: { label: (item) => item.dataset.label + ': ' + Math.round(item.parsed.y) + ' cm' } },
                 },
                 scales: {
                     x: { grid: { display: false } },
                     y: {
                         min: range.min,
                         max: range.max,
-                        title: { display: true, text: 'Tinggi (m)', color: '#94a3b8', font: { size: 11 } },
-                        ticks: { stepSize: 0.5 },
+                        title: { display: true, text: 'Tinggi (cm)', color: '#94a3b8', font: { size: 11 } },
+                        ticks: { stepSize: 50 },
                         grid: { color: '#f1f5f9' },
                     },
                 },
