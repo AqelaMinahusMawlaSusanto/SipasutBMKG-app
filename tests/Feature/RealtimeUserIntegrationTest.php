@@ -62,7 +62,7 @@ class RealtimeUserIntegrationTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Surabaya Timur');
         $response->assertSee('BAHAYA');
-        $response->assertSee('345 cm'); // 3.45 m -> 345 cm
+        $response->assertSee('3.5 m'); // number_format 3.45 -> 3.5 m
     }
 
     public function test_realtime_api_returns_live_updated_prediction_and_notification()
@@ -99,7 +99,7 @@ class RealtimeUserIntegrationTest extends TestCase
                 'label' => 'Surabaya Timur',
                 'status' => 'waspada',
                 'status_label' => 'WASPADA',
-                'current_tide' => 290,
+                'current_tide' => 2.9,
             ],
             'notification' => [
                 'title' => 'Peringatan Rob Ekstrem',
@@ -151,7 +151,7 @@ class RealtimeUserIntegrationTest extends TestCase
         $this->assertEquals('hourly', $chart['source']);
         $this->assertCount(24, $chart['points']);
         $this->assertEquals('14.00 WIB', $chart['high']['time']);
-        $this->assertEquals(210, $chart['high']['v']);
+        $this->assertEquals(2.1, $chart['high']['v']);
 
         // 4. Admin update data prediksi
         $prediction = Prediction::where('location_id', $this->location->id)->first();
@@ -171,6 +171,6 @@ class RealtimeUserIntegrationTest extends TestCase
 
         $responseUpdated = $this->getJson(route('dashboard.realtime', ['lokasi' => 'surabaya-timur']));
         $this->assertEquals('bahaya', $responseUpdated->json('active.status'));
-        $this->assertEquals(320, $responseUpdated->json('active.chart.high.v'));
+        $this->assertEquals(3.2, $responseUpdated->json('active.chart.high.v'));
     }
 }

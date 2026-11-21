@@ -98,7 +98,7 @@
             </span>
             <div>
                 <p class="stat-card__label">Pasang Saat Ini</p>
-                <p class="stat-card__value" id="valCurrentTide">{{ number_format($active['current_tide'], 2) }} m</p>
+                <p class="stat-card__value" id="valCurrentTide">{{ number_format($active['current_tide'], 1) }} m</p>
                 <p class="stat-card__meta" id="valCurrentTime">{{ $active['current_time'] }}</p>
             </div>
         </div>
@@ -162,7 +162,7 @@
                     @elseif ($active['status'] === 'waspada')
                         Prediksi pasang tinggi diperkirakan terjadi pada pukul {{ $active['next_high']['time'] }}
                     @else
-                        Prediksi pasang tertinggi berikutnya {{ number_format($active['next_high']['value'], 2) }} m pada pukul {{ $active['next_high']['time'] }}
+                        Prediksi pasang tertinggi berikutnya {{ number_format($active['next_high']['value'], 1) }} m pada pukul {{ $active['next_high']['time'] }}
                     @endif
                 </span>
             </p>
@@ -181,7 +181,7 @@
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2" stroke="currentColor" stroke-width="2"/></svg> Ketinggian Terakhir</span>
-                        <strong id="valLastHeight">{{ number_format($active['last_height'], 2) }} m</strong>
+                        <strong id="valLastHeight">{{ number_format($active['last_height'], 1) }} m</strong>
                     </li>
                     <li class="info-list__row">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z" stroke="currentColor" stroke-width="2"/></svg> Koordinat</span>

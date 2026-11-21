@@ -75,10 +75,10 @@ class KalenderController extends Controller
         return sprintf('%02d.00 WIB', $jam);
     }
 
-    // water_level tersimpan dalam cm, ditampilkan dalam cm
+    // water_level tersimpan dalam cm, dikonversi ke meter dengan membagi 100
     private function formatMeter(int $cm): string
     {
-        return $cm . ' cm';
+        return number_format($cm / 100, 2, ',', '.') . ' m';
     }
 
     // Ganti dengan aturan status yang dipakai halaman admin kalau sudah ada

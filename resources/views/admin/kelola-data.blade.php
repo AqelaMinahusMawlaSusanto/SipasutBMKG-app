@@ -492,8 +492,8 @@
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                 </div>
                 <div>
-                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Pasang (m) <span style="color:#ef4444;">*</span></label>
-                    <input type="number" step="any" name="high_tide_level" required placeholder="Contoh: 0.81"
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Pasang (cm / m) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" step="any" name="high_tide_level" required placeholder="Contoh: 125 (dikonversi ke 1.25 m) atau 1.25"
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                 </div>
             </div>
@@ -505,8 +505,8 @@
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                 </div>
                 <div>
-                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Surut (m) <span style="color:#ef4444;">*</span></label>
-                    <input type="number" step="any" name="low_tide_level" required placeholder="Contoh: 0.81"
+                    <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Surut (cm / m) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" step="any" name="low_tide_level" required placeholder="Contoh: -50 (dikonversi ke -0.5 m) atau -0.5"
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                 </div>
             </div>
@@ -580,7 +580,7 @@
                 </div>
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Pasang (m)</label>
-                    <input type="number" step="any" name="high_tide_level" id="editHighLevel" required
+                    <input type="number" step="any" name="high_tide_level" id="editHighLevel" required placeholder="Contoh: 1.25"
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                 </div>
             </div>
@@ -593,7 +593,7 @@
                 </div>
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Tinggi Surut (m)</label>
-                    <input type="number" step="any" name="low_tide_level" id="editLowLevel" required
+                    <input type="number" step="any" name="low_tide_level" id="editLowLevel" required placeholder="Contoh: -0.50"
                         style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                 </div>
             </div>

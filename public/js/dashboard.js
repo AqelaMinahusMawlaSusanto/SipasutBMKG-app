@@ -25,11 +25,11 @@ function valueAt(points, h) {
     return points[points.length - 1].v;
 }
 
-// Batas sumbu Y mengikuti data, dibulatkan ke kelipatan 50 cm
+// Batas sumbu Y mengikuti data (meter), dibulatkan ke 0,5 dengan sedikit ruang untuk label
 function yRange(values) {
     const lo = Math.min(...values);
     const hi = Math.max(...values);
-    return { min: Math.floor((lo - 30) / 50) * 50, max: Math.ceil((hi + 30) / 50) * 50 };
+    return { min: Math.floor((lo - 0.3) * 2) / 2, max: Math.ceil((hi + 0.3) * 2) / 2 };
 }
 
 function hexToRgba(hex, alpha) {
@@ -76,7 +76,7 @@ function makeMarkerPlugin(markers) {
                 ctx.textAlign = 'center';
                 ctx.fillStyle = m.color;
                 const prefix = { high: 'Pasang ', low: 'Surut ', now: 'Saat ini ' }[m.kind] || '';
-                ctx.fillText(prefix + Math.round(m.v) + ' cm', x, m.kind === 'low' ? y + 20 : y - 12);
+                ctx.fillText(prefix + m.v.toFixed(2) + ' m', x, m.kind === 'low' ? y + 20 : y - 12);
 
                 if (m.kind === 'now') {
                     ctx.fillStyle = m.color;
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (footnoteText && c.high) {
             footnoteText.textContent =
                 'Pasang tertinggi ' + (c.isToday ? 'hari ini' : c.dateLabel) + ': ' +
-                Math.round(c.high.v) + ' cm pada pukul ' + c.high.time;
+                Number(c.high.v).toFixed(2) + ' m pada pukul ' + c.high.time;
         }
     }
 
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
             type: 'line',
             data: {
                 datasets: [{
-                    label: 'Ketinggian (cm)',
+                    label: 'Ketinggian (m)',
                     data: pts.map((p) => ({ x: p.h, y: p.v })),
                     borderColor: color,
                     backgroundColor: hexToRgba(color, 0.12),
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tooltip: {
                         callbacks: {
                             title: (items) => hhmm(items[0].parsed.x) + ' WIB',
-                            label: (item) => Math.round(item.parsed.y) + ' cm',
+                            label: (item) => item.parsed.y.toFixed(2) + ' m',
                         },
                     },
                 },
@@ -299,8 +299,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: {
                         min: range.min,
                         max: range.max,
-                        title: { display: true, text: 'Ketinggian (cm)', color: '#94a3b8', font: { size: 11 } },
-                        ticks: { stepSize: 50 },
+                        title: { display: true, text: 'Ketinggian (m)', color: '#94a3b8', font: { size: 11 } },
+                        ticks: { stepSize: 0.5 },
                         grid: { color: '#f1f5f9' },
                     },
                 },
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Stat cards
         const valCurrentTide = document.getElementById('valCurrentTide');
-        if (valCurrentTide) valCurrentTide.textContent = Math.round(Number(active.current_tide)) + ' cm';
+        if (valCurrentTide) valCurrentTide.textContent = Number(active.current_tide).toFixed(1) + ' m';
 
         const valCurrentTime = document.getElementById('valCurrentTime');
         if (valCurrentTime) valCurrentTime.textContent = active.current_time;
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Side info card
         const valLastHeight = document.getElementById('valLastHeight');
-        if (valLastHeight) valLastHeight.textContent = Math.round(Number(active.last_height)) + ' cm';
+        if (valLastHeight) valLastHeight.textContent = Number(active.last_height).toFixed(1) + ' m';
 
         const valCoordinate = document.getElementById('valCoordinate');
         if (valCoordinate) valCoordinate.textContent = active.coordinate;

@@ -27,9 +27,9 @@ def is_yellow_color(color: Any) -> bool:
 
 def normalize_status(high_m: float) -> str:
     """Tentukan status kondisi pasang surut BMKG"""
-    if high_m >= 1.5:
+    if high_m >= 2.0:
         return "Bahaya"
-    elif high_m >= 1.0:
+    elif high_m >= 1.5:
         return "Waspada"
     return "Aman"
 
@@ -94,9 +94,10 @@ def parse_tidal_matrix(rows: List[List[Any]], filename: str = "") -> Dict[str, A
                 if col_idx < len(col_splits):
                     parts = col_splits[col_idx]
                     val_str = parts[d_idx] if d_idx < len(parts) else (parts[0] if parts else '0')
-                    val_str = val_str.replace(',', '').strip()
+                    # Tangani koma desimal Indonesia: "40,0" -> 40.0, "110,0" -> 110.0, "-50,0" -> -50.0
+                    val_str = val_str.replace(',', '.').strip()
                     try:
-                        val_num = int(float(val_str))
+                        val_num = int(round(float(val_str)))
                     except (ValueError, TypeError):
                         val_num = 0
 
@@ -196,9 +197,10 @@ def parse_pdf_bmkg_enhanced(file_path: str, default_month: int = 7, default_year
                 for col_idx in range(24):
                     parts = col_splits[col_idx]
                     val_str = parts[d_idx] if d_idx < len(parts) else (parts[0] if parts else '0')
-                    val_str = val_str.replace(',', '').strip()
+                    # Tangani koma desimal Indonesia: "40,0" -> 40.0, "110,0" -> 110.0, "-50,0" -> -50.0
+                    val_str = val_str.replace(',', '.').strip()
                     try:
-                        vals.append(int(float(val_str)))
+                        vals.append(int(round(float(val_str))))
                     except (ValueError, TypeError):
                         vals.append(0)
                 clean_days[day_num] = vals
@@ -234,7 +236,8 @@ def parse_pdf_bmkg_enhanced(file_path: str, default_month: int = 7, default_year
                         closest_d = min(day_ys.keys(), key=lambda d: abs(day_ys[d] - wy))
                         closest_h = min(hour_xs.keys(), key=lambda h: abs(hour_xs[h] - wx))
                         try:
-                            val = int(w['text'])
+                            val_clean = w['text'].replace(',', '.').strip()
+                            val = int(round(float(val_clean)))
                         except (ValueError, TypeError):
                             val = 0
                         day_highlights.setdefault(closest_d, []).append((closest_h, val))

@@ -68,7 +68,8 @@ class TideChart
         if ($hourly->count() >= 2) {
             $source = 'hourly';
             foreach ($hourly as $row) {
-                $p = ['h' => (float) $row->hour, 'v' => (float) $row->water_level]; // cm
+                // Konversi cm ke meter dengan membagi nilai cm dengan 100
+                $p = ['h' => (float) $row->hour, 'v' => round($row->water_level / 100, 2)];
                 $points[] = $p;
                 if ($high === null || $p['v'] > $high['v']) {
                     $high = $p;
@@ -83,8 +84,9 @@ class TideChart
 
             if ($tHigh !== null && $tLow !== null) {
                 $source   = 'estimated';
-                $hi       = (float) $prediction->high_tide_level * 100; // meter -> cm
-                $lo       = (float) $prediction->low_tide_level * 100;  // meter -> cm
+                // Data pada tabel predictions sudah tersimpan dalam satuan meter
+                $hi       = (float) $prediction->high_tide_level;
+                $lo       = (float) $prediction->low_tide_level;
                 $estimate = self::estimateCurve($tHigh, $hi, $tLow, $lo);
                 $points   = $estimate['points'];
                 $high     = ['h' => $tHigh, 'v' => $hi];
