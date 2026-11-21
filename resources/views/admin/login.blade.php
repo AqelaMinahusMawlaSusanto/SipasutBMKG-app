@@ -16,7 +16,7 @@
                 <label for="email">Email</label>
                 <div class="control">
                     <input type="email" id="email" name="email" placeholder="Masukkan Email"
-                           value="{{ old('email') }}" autocomplete="email" autofocus>
+                           value="{{ old('email', session('registered_email')) }}" autocomplete="email" {{ !old('email') && !session('registered_email') ? 'autofocus' : '' }}>
                 </div>
                 @error('email')
                     <div class="alert alert-error">{{ $message }}</div>
@@ -27,7 +27,7 @@
                 <label for="password">Password</label>
                 <div class="control">
                     <input type="password" id="password" name="password" placeholder="Masukkan Password"
-                           autocomplete="current-password">
+                           autocomplete="current-password" {{ old('email') || session('registered_email') ? 'autofocus' : '' }}>
                 </div>
                 @error('password')
                     <div class="alert alert-error">{{ $message }}</div>

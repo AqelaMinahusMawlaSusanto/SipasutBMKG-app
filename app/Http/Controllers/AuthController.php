@@ -56,16 +56,16 @@ class AuthController extends Controller
         // Assign Spatie Role
         $user->assignRole('admin');
 
-        Auth::login($user);
-
         ActivityLog::record(
             'register',
             "Admin baru {$user->name} ({$user->email}) berhasil mendaftar.",
             $user
         );
 
-        return redirect()->route('admin.dashboard')
-            ->with('success', "Selamat datang di SIPASUT BMKG, {$user->name}! Akun Admin berhasil dibuat.");
+        return redirect()->route('login')
+            ->withInput(['email' => $validated['email']])
+            ->with('registered_email', $validated['email'])
+            ->with('status', "Registrasi berhasil! Silakan masukkan password untuk melanjutkan verifikasi OTP.");
     }
 
     public function login(Request $request)

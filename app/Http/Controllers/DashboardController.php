@@ -84,18 +84,18 @@ class DashboardController extends Controller
                 default   => 'Kondisi Normal',
             };
 
-            // Data kondisi saat ini.
-            // Nilai 230 merupakan nilai tampilan default (cm),
+            // Data kondisi saat ini (satuan meter).
+            // Nilai 2.3 merupakan nilai tampilan default (meter),
             // bukan data pengukuran aktual.
             $currentTide = $latestPrediction
-                ? round((float) $latestPrediction->high_tide_level, 2)
-                : 2.30;
+                ? (float) $latestPrediction->high_tide_level
+                : 2.3;
 
             $currentTime = now()->format('H.i') . ' WIB';
 
             $lastHeight = $latestPrediction
-                ? round((float) $latestPrediction->high_tide_level, 2)
-                : 2.30;
+                ? (float) $latestPrediction->high_tide_level
+                : 2.3;
 
             if ($latestPrediction && $latestPrediction->updated_at) {
                 $updatedAt = $latestPrediction->updated_at
@@ -123,12 +123,12 @@ class DashboardController extends Controller
                 $warningDesc = 'Kondisi aman untuk aktivitas di wilayah perairan.';
             }
 
-            // Pasang tertinggi diambil dari grafik, jadi selalu sama dengan yang tampil di grafik.
+            // Pasang tertinggi diambil dari grafik, jadi selalu sama dengan yang tampil di grafik (satuan meter).
             $nextHighTime = $chart['high']['time']
                 ?? ($latestPrediction ? $latestPrediction->high_tide_time : '-');
 
             $nextHighVal = $chart['high']['v']
-                ?? ($latestPrediction ? round((float) $latestPrediction->high_tide_level, 2) : 0);
+                ?? ($latestPrediction ? (float) $latestPrediction->high_tide_level : 0.0);
 
             // Nama kabupaten/wilayah.
             $name = strtolower($loc->name);
@@ -187,20 +187,20 @@ class DashboardController extends Controller
                 'status'         => 'aman',
                 'status_label'   => 'AMAN',
                 'status_desc'    => 'Kondisi Normal',
-                'current_tide'   => 230,
+                'current_tide'   => 2.3,
                 'current_time'   => '15.30 WIB',
                 'wind_speed'     => 12,
                 'wind_dir'       => 'Timur Laut',
                 'weather'        => 'Cerah',
                 'temperature'    => 31,
                 'updated_at'     => '18/08/2026, 18.30 WIB',
-                'last_height'    => 230,
+                'last_height'    => 2.3,
                 'coordinate'     => '-7.2498, 112.7351',
                 'warning_title'  => 'Tidak ada peringatan pasang tinggi.',
                 'warning_desc'   => 'Kondisi aman untuk aktivitas di wilayah perairan.',
                 'chart'          => TideChart::emptyChart(),
                 'next_high'      => [
-                    'value' => 0,
+                    'value' => 0.0,
                     'time'  => '-',
                 ],
             ],

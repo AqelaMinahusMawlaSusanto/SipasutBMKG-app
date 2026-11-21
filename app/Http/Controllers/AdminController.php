@@ -247,15 +247,15 @@ class AdminController extends Controller
     {
         $tHigh = TideChart::timeToHours($prediksi->high_tide_time) ?? 6.0;
         $tLow  = TideChart::timeToHours($prediksi->low_tide_time) ?? 18.0;
-        $hi    = (float) $prediksi->high_tide_level * 100; // meter -> cm
-        $lo    = (float) $prediksi->low_tide_level * 100;  // meter -> cm
+        $hi    = (float) $prediksi->high_tide_level; // dalam meter
+        $lo    = (float) $prediksi->low_tide_level;  // dalam meter
 
         $estimate = TideChart::estimateCurve($tHigh, $hi, $tLow, $lo);
         $hourlyMap = [];
         foreach ($estimate['points'] as $p) {
             $h = (int) $p['h'];
             if ($p['h'] == $h && $h >= 0 && $h < 24 && !isset($hourlyMap[$h])) {
-                $hourlyMap[$h] = (int) round($p['v']); // already in cm
+                $hourlyMap[$h] = (int) round($p['v'] * 100); // konversi meter -> cm untuk tabel tidal_data
             }
         }
 
@@ -271,7 +271,7 @@ class AdminController extends Controller
                 'location_id' => $prediksi->location_id,
                 'record_date' => $recordDateStr,
                 'hour'        => $h,
-                'water_level' => $hourlyMap[$h] ?? (int) round($hi),
+                'water_level' => $hourlyMap[$h] ?? (int) round($hi * 100),
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ];

@@ -35,8 +35,10 @@ class AuthTest extends TestCase
             'password_confirmation' => 'password123',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('admin.dashboard'));
+        $this->assertGuest();
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('status');
+        $response->assertSessionHas('registered_email', 'petugas.baru@sipasut.id');
 
         $user = User::where('email', 'petugas.baru@sipasut.id')->first();
         $this->assertNotNull($user);
@@ -52,8 +54,19 @@ class AuthTest extends TestCase
             'password' => 'admin123',
         ]);
 
+        $response->assertRedirect(route('otp.show'));
+
+        $admin = User::where('email', 'admin@sipasut.id')->first();
+        $admin->update([
+            'otp_code' => \Illuminate\Support\Facades\Hash::make('123456'),
+            'otp_expires_at' => now()->addMinutes(5),
+        ]);
+
+        $verifyResponse = $this->withSession(['otp_user_id' => $admin->id])
+            ->post(route('otp.verify'), ['code' => '123456']);
+
         $this->assertAuthenticated();
-        $response->assertRedirect(route('admin.dashboard'));
+        $verifyResponse->assertRedirect(route('admin.dashboard'));
     }
 
     public function test_guest_cannot_access_admin_dashboard(): void
