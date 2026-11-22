@@ -281,7 +281,7 @@ class AdminController extends Controller
     }
 
     public function storeDataUpload(Request $request)
-    {python python_service\cli_parser.py "storage\app\public\uploads\tidal\1793193041_10.1. SBYTIM oktober2026.pdf"
+    {
         $request->validate([
             'location_id' => 'required|exists:locations,id',
             'period_month' => 'nullable|integer|between:1,12',
@@ -415,10 +415,10 @@ class AdminController extends Controller
     {
         $upload = DataUpload::findOrFail($id);
         $fileName = $upload->file_name;
-        
+
         // Hapus file fisik jika ada
         Storage::disk('public')->delete($upload->file_path);
-        
+
         // Hapus data terkait
         TidalData::where('upload_id', $upload->id)->delete();
         $upload->delete();
@@ -530,8 +530,8 @@ class AdminController extends Controller
         }
 
         if (empty($records)) {
-    return ['error' => 'Parser Python gagal membaca file. Periksa instalasi Python/pdfplumber.'];
-}
+            return ['error' => 'Parser Python gagal membaca file. Periksa instalasi Python/pdfplumber.'];
+        }
 
         $predictions = [];
         $byDay = [];
