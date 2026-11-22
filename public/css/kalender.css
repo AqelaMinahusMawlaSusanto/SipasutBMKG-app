@@ -312,6 +312,11 @@
     color: var(--amber);
     background: var(--amber-bg);
 }
+.tide-status.is-bahaya {
+    border-color: #dc2626;
+    color: #dc2626;
+    background: #fee2e2;
+}
 
 @media (max-width: 900px) {
     .kalender-page { padding: 20px; }

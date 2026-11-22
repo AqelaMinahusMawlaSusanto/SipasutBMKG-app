@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ---------- Data pasang/surut dari admin (tabel database) ----------
+    // ---------- Data pasang/surut dari admin (tabel predictions) ----------
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
     function dateKey(d) {
@@ -184,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // jadi perubahan dari admin langsung ikut tampil.
     function fetchTide(slug, year, month) {
         var url = window.KALENDER_DATA_URL + '?slug=' + encodeURIComponent(slug) +
-                  '&tahun=' + year + '&bulan=' + month;
-        return fetch(url, { headers: { 'Accept': 'application/json' } })
+                  '&tahun=' + year + '&bulan=' + month + '&_=' + Date.now();
+        return fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
             .then(function (r) {
                 if (!r.ok) throw new Error(r.status);
                 return r.json();
@@ -231,28 +231,4 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                var statusClass = tide.status === 'Aman' ? '' : ' is-waspada';
-
-                pasangBody.classList.remove('is-empty');
-                surutBody.classList.remove('is-empty');
-
-                pasangBody.innerHTML =
-                    tideFieldHtml('&#128337; Waktu', tide.jam_pasang) +
-                    tideFieldHtml('&#127754; Tinggi', tide.tinggi_pasang) +
-                    '<div class="tide-field"><span class="tide-field__label">Status</span>' +
-                    '<span class="tide-status' + statusClass + '">' + tide.status + '</span></div>';
-
-                surutBody.innerHTML =
-                    tideFieldHtml('&#128337; Waktu', tide.jam_surut) +
-                    tideFieldHtml('&#127754; Tinggi', tide.tinggi_surut);
-            })
-            .catch(function () {
-                if (latestRequest !== requestKey) return;
-                setBodies('Gagal memuat data.', true);
-            });
-    }
-
-    // ---------- Init ----------
-    renderCalendar();
-    renderDetail();
-});
+                // Status mengikuti

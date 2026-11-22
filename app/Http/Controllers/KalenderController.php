@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
-use App\Models\TidalData;
+use App\Models\Prediction;
 use Illuminate\Http\Request;
 
 class KalenderController extends Controller
 {
-    // slug untuk dropdown, code mengikuti kolom `code` di tabel locations
     private function locations(): array
     {
         return [
@@ -27,6 +26,7 @@ class KalenderController extends Controller
     }
 
     // GET /kalender/data?slug=...&tahun=...&bulan=...
+    // Sumber data = tabel predictions (yang dikelola admin di /admin/data)
     public function data(Request $request)
     {
         $request->validate([
@@ -43,49 +43,28 @@ class KalenderController extends Controller
             return response()->json([]);
         }
 
-        $perTanggal = TidalData::where('location_id', $lokasi->id)
+        $rows = Prediction::where('location_id', $lokasi->id)
             ->whereYear('record_date', $request->tahun)
             ->whereMonth('record_date', $request->bulan)
-            ->orderBy('hour')
-            ->get()
-            ->groupBy(fn ($r) => $r->record_date->format('Y-m-d'));
+            ->get();
 
         $hasil = [];
-        foreach ($perTanggal as $tanggal => $jamJam) {
-            $max = $jamJam->max('water_level');
-            $min = $jamJam->min('water_level');
-
-            $pasang = $jamJam->firstWhere('water_level', $max); // jam pertama yang mencapai puncak
-            $surut  = $jamJam->firstWhere('water_level', $min);
-
-            $hasil[$tanggal] = [
-                'jam_pasang'    => $this->formatJam($pasang->hour),
-                'tinggi_pasang' => $this->formatMeter($max),
-                'jam_surut'     => $this->formatJam($surut->hour),
-                'tinggi_surut'  => $this->formatMeter($min),
-                'status'        => $this->statusDari($max),
+        foreach ($rows as $row) {
+            $hasil[$row->record_date->format('Y-m-d')] = [
+                'jam_pasang'    => $row->high_tide_time,
+                'tinggi_pasang' => $this->formatMeter($row->high_tide_level),
+                'jam_surut'     => $row->low_tide_time,
+                'tinggi_surut'  => $this->formatMeter($row->low_tide_level),
+                'status'        => $row->status,
             ];
         }
 
         return response()->json($hasil);
     }
 
-    private function formatJam(int $jam): string
+    // high_tide_level / low_tide_level sudah dalam meter di tabel predictions
+    private function formatMeter($m): string
     {
-        return sprintf('%02d.00 WIB', $jam);
-    }
-
-    // water_level tersimpan dalam cm, ditampilkan dalam meter
-    private function formatMeter(int $cm): string
-    {
-        return number_format($cm / 100, 2, ',', '.') . ' m';
-    }
-
-    // Ganti dengan aturan status yang dipakai halaman admin kalau sudah ada
-    private function statusDari(int $cm): string
-    {
-        if ($cm >= 140) return 'Bahaya';
-        if ($cm >= 120) return 'Waspada';
-        return 'Aman';
+        return number_format((float) $m, 2, ',', '.') . ' m';
     }
 }
