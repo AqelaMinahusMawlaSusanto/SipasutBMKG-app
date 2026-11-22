@@ -91,7 +91,12 @@ def parse_prediction_dataframe(df: pd.DataFrame, default_month: int = 7, default
 
         # Parse high tide
         try:
-            high_lvl = float(row.get(high_lvl_col, 0.8)) if high_lvl_col else 0.8
+            high_raw = row.get(high_lvl_col, 0.8) if high_lvl_col else 0.8
+            if isinstance(high_raw, str):
+                high_raw = high_raw.replace(',', '.').strip()
+            high_lvl = float(high_raw)
+            if abs(high_lvl) >= 10:
+                high_lvl = high_lvl / 100.0
         except (ValueError, TypeError):
             high_lvl = 0.8
 
@@ -99,7 +104,12 @@ def parse_prediction_dataframe(df: pd.DataFrame, default_month: int = 7, default
 
         # Parse low tide
         try:
-            low_lvl = float(row.get(low_lvl_col, -0.5)) if low_lvl_col else -0.5
+            low_raw = row.get(low_lvl_col, -0.5) if low_lvl_col else -0.5
+            if isinstance(low_raw, str):
+                low_raw = low_raw.replace(',', '.').strip()
+            low_lvl = float(low_raw)
+            if abs(low_lvl) >= 10:
+                low_lvl = low_lvl / 100.0
         except (ValueError, TypeError):
             low_lvl = -0.5
 

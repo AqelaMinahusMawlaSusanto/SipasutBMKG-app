@@ -24,7 +24,17 @@
             </span>
         </a>
 
-        <nav class="navbar__menu">
+        <button type="button" class="navbar__toggle" id="navToggle"
+                aria-label="Buka menu" aria-expanded="false" aria-controls="navMenu">
+            <svg class="icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+
+        <nav class="navbar__menu" id="navMenu">
             <a href="{{ route('dashboard.index') }}"
                class="navbar__link {{ request()->routeIs('dashboard.index') || request()->is('/') ? 'is-active' : '' }}">
                Dashboard
@@ -42,22 +52,51 @@
                Kalender
             </a>
             @auth
-                @if(Auth::user()->hasRole('admin') || Auth::user()->isAdmin())
-                    <a href="{{ route('admin.dashboard') }}" class="navbar__link" style="color: #0284c7; font-weight: 600;">
-                        Panel Admin
-                    </a>
-                @endif
-            @else
-                <a href="{{ route('login') }}" class="navbar__link" style="color: #0284c7; font-weight: 600;">
-                    Login Admin
-                </a>
-            @endauth
+    @if(Auth::user()->hasRole('admin') || Auth::user()->isAdmin())
+        <a href="{{ route('admin.dashboard') }}" class="navbar__link" style="color: #0284c7; font-weight: 600;">
+            Panel Admin
+        </a>
+    @endif
+@else
+    <a href="{{ route('login') }}" class="navbar__link" style="color: #0284c7; font-weight: 600;">
+        Login Admin
+    </a>
+@endauth
         </nav>
     </header>
 
     <main>
         @yield('content')
     </main>
+
+    <script>
+        // Menu hamburger (tablet & HP)
+        (function () {
+            var toggle = document.getElementById('navToggle');
+            var menu = document.getElementById('navMenu');
+            if (!toggle || !menu) return;
+
+            function setOpen(open) {
+                menu.classList.toggle('is-open', open);
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+            }
+
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                setOpen(!menu.classList.contains('is-open'));
+            });
+            document.addEventListener('click', function (e) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) setOpen(false);
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') setOpen(false);
+            });
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 1024) setOpen(false);
+            });
+        })();
+    </script>
 
     @stack('scripts')
 </body>

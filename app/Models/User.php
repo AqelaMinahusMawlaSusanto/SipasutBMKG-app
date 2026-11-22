@@ -21,11 +21,15 @@ class User extends Authenticatable
         'role',
         'avatar',
         'phone',
+        'google_id',
+        'otp_code',
+        'otp_expires_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'otp_code',
     ];
 
     protected function casts(): array
@@ -33,13 +37,16 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'otp_expires_at' => 'datetime',
         ];
     }
 
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin' || $this->hasRole('admin');
-    }
+    public function isAdmin()
+{
+    // Sesuaikan dengan logika role di database Anda
+    // Contoh jika kolom role berisi string 'admin':
+    return $this->role === 'admin'; 
+}
 
     public function activityLogs()
     {
