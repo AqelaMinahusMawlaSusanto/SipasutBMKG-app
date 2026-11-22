@@ -231,4 +231,30 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Status mengikuti
+                // Status mengikuti data admin: Aman / Waspada / Bahaya
+                var statusClass = tide.status === 'Aman' ? '' :
+                                  (tide.status === 'Bahaya' ? ' is-bahaya' : ' is-waspada');
+
+                pasangBody.classList.remove('is-empty');
+                surutBody.classList.remove('is-empty');
+
+                pasangBody.innerHTML =
+                    tideFieldHtml('&#128337; Waktu', tide.jam_pasang) +
+                    tideFieldHtml('&#127754; Tinggi', tide.tinggi_pasang) +
+                    '<div class="tide-field"><span class="tide-field__label">Status</span>' +
+                    '<span class="tide-status' + statusClass + '">' + tide.status + '</span></div>';
+
+                surutBody.innerHTML =
+                    tideFieldHtml('&#128337; Waktu', tide.jam_surut) +
+                    tideFieldHtml('&#127754; Tinggi', tide.tinggi_surut);
+            })
+            .catch(function () {
+                if (latestRequest !== requestKey) return;
+                setBodies('Gagal memuat data.', true);
+            });
+    }
+
+    // ---------- Init ----------
+    renderCalendar();
+    renderDetail();
+});
