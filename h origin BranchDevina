@@ -1,0 +1,5 @@
+[33m12a8105[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mBranchDevina[m[33m)[m Merge remote-tracking branch 'origin/BranchAurel' into BranchDevina
+[33m235d582[m[33m ([m[1;31morigin/BranchDevina[m[33m)[m perbaikan authcontroller
+[33m1eeedea[m Merge branch 'BranchDevina' of https://github.com/AqelaMinahusMawlaSusanto/SipasutBMKG-app into BranchDevina
+[33m5098f03[m uji validasi input
+[33m793cb9e[m[33m ([m[1;31morigin/BranchAurel[m[33m)[m Tambah batas percobaan OTP, kirim ulang kode, dan kembali ke login
