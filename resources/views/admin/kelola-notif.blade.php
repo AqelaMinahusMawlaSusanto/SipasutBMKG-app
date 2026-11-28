@@ -1,9 +1,36 @@
 <x-app-layout>
+@push('styles')
+<style>
+.kn-page-pad { padding: 28px 24px; }
+.kn-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.kn-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kn-stat-grid > div { min-width: 0; }
+.kn-modal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media (max-width: 1024px) {
+    .kn-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    .kn-page-pad { padding: 16px 14px; }
+    .kn-header { flex-direction: column; align-items: stretch; }
+    .kn-header h1 { font-size: 20px !important; }
+    .kn-header button { width: 100%; justify-content: center; }
+    .kn-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .kn-stat-grid > div { padding: 14px 12px !important; gap: 10px !important; }
+    .kn-stat-grid [style*="font-size: 28px"] { font-size: 20px !important; }
+    .kn-stat-grid [style*="width: 52px"] { width: 38px !important; height: 38px !important; }
+    .kn-stat-grid svg { width: 18px !important; height: 18px !important; }
+    .kn-modal-grid-2 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 380px) {
+    .kn-stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+@endpush
     <div class="bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;">
-        <div class="max-w-7xl mx-auto px-6 py-8 space-y-6" style="padding-top: 32px;">
+        <div class="max-w-7xl mx-auto space-y-6 kn-page-pad">
 
             <!-- Title & Tombol Tambah Notifikasi -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <div class="kn-header">
                 <div>
                     <h1 class="text-3xl font-bold text-[#0F172A] tracking-tight" style="color: #0F172A; font-weight: 700; font-size: 26px; margin: 0 0 4px;">Kelola Notifikasi</h1>
                     <p class="text-sm font-medium text-slate-500 mt-1" style="color: #64748B; font-size: 13px; margin: 0;">Mengelola informasi dan peringatan yang ditampilkan kepada pengguna website monitoring</p>
@@ -39,7 +66,7 @@
             @endif
 
             <!-- 4 Stat Cards Mendatar Kesamping (4 Kolom 1 Baris Sejajar) -->
-            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="kn-stat-grid">
                 
                 <!-- Card 1: Total Notifikasi -->
                 <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -302,7 +329,7 @@
                         <input type="text" name="title" required placeholder="Contoh: Pasang Maksimum Waspada"
                             style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div class="kn-modal-grid-2">
                         <div>
                             <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Kategori <span style="color:#ef4444;">*</span></label>
                             <select name="type" required
@@ -361,7 +388,7 @@
                         <input type="text" name="title" id="editNotifTitle" required
                             style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div class="kn-modal-grid-2">
                         <div>
                             <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Kategori <span style="color:#ef4444;">*</span></label>
                             <select name="type" id="editNotifType" required

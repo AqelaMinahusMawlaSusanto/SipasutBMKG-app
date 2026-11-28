@@ -162,9 +162,9 @@
     box-shadow: 0 2px 6px rgba(15, 23, 42, .35);
 }
 
-.marker--tinggi { background: var(--red); }
-.marker--normal { background: var(--green); }
-.marker--rendah { background: var(--blue); }
+/* Status kondisi air: normal (hijau) & waspada (oranye) */
+.marker--normal  { background: var(--green); }
+.marker--waspada { background: #f97316; }
 
 /* Tombol buka/tutup legenda, pojok kiri bawah peta */
 .legend-toggle {
@@ -213,9 +213,8 @@
     flex-shrink: 0;
 }
 
-.dot--tinggi { background: var(--red); }
-.dot--normal { background: var(--green); }
-.dot--rendah { background: var(--blue); }
+.dot--normal  { background: var(--green); }
+.dot--waspada { background: #f97316; }
 
 .legend-box strong { display: block; font-size: 12px; color: var(--ink); }
 .legend-box small { display: block; font-size: 11px; color: var(--slate); }
@@ -261,20 +260,6 @@
 
 .detail-card__title-row h3 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ink); }
 
-.badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.badge--tinggi { background: var(--red-bg); color: var(--red); }
-.badge--normal { background: var(--green-bg); color: var(--green); }
-.badge--rendah { background: var(--blue-light); color: var(--blue); }
-
 .detail-card__kabupaten { margin: 6px 0 2px; font-size: 13px; color: var(--blue); font-weight: 600; }
 .detail-card__koordinat { margin: 0 0 14px; font-size: 12px; color: var(--slate); }
 
@@ -300,11 +285,29 @@
 
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
-    .lokasi-page { padding: 20px; }
+    .lokasi-page { padding: 20px 16px; }
     .lokasi-search-row { flex-direction: column; }
     .lokasi-grid { grid-template-columns: 1fr; }
     #lokasiMap { height: 380px; }
-    
+}
+
+@media (max-width: 640px) {
+    .lokasi-page { padding: 14px 14px 48px; }
+    .lokasi-page__header h1 { font-size: 20px; }
+    .lokasi-page__header p { font-size: 13px; margin-bottom: 16px; }
+    .lokasi-search { padding: 10px 12px; }
+    .lokasi-search input { font-size: 14px; }
+    .btn-cari { padding: 0 16px; font-size: 13px; min-height: 44px; }
+    #lokasiMap { height: 300px; }
+    .detail-card { padding: 14px; }
+    .detail-card h2 { font-size: 14px; }
+    .detail-card__title-row h3 { font-size: 15px; }
+    .detail-card img { height: 120px; }
+    .info-banner { padding: 12px 14px; }
+    .info-banner strong { font-size: 12px; }
+    .info-banner small { font-size: 11px; }
+    .detail-card__row { font-size: 12px; }
+    .detail-card__row strong { font-size: 12px; }
 }
 
 .detail-card .detail-card__kabupaten#detailMeliputi {

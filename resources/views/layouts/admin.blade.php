@@ -20,66 +20,67 @@
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased flex min-h-screen">
 
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden" onclick="closeSidebar()"></div>
+
     <!-- Sidebar Admin -->
-    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 hidden md:flex min-h-screen sticky top-0 border-r border-slate-800">
+    <aside id="adminSidebar" class="fixed md:sticky top-0 left-0 z-50 h-full md:h-screen w-72 md:w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 md:flex min-h-screen border-r border-slate-800 transition-transform duration-300 -translate-x-full md:translate-x-0">
         <!-- Brand Header -->
-        <div class="h-20 flex items-center gap-3 px-6 border-b border-slate-800">
-            <div class="w-9 h-9 rounded-xl bg-sky-500 flex items-center justify-center text-white font-bold shadow-md shadow-sky-500/20">
+        <div class="h-16 md:h-20 flex items-center gap-3 px-5 border-b border-slate-800">
+            <div class="w-9 h-9 rounded-xl bg-sky-500 flex items-center justify-center text-white font-bold shadow-md shadow-sky-500/20 shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
-            <div>
-                <span class="text-base font-extrabold text-white tracking-tight">SIPASUT ADMIN</span>
+            <div class="min-w-0">
+                <span class="text-sm font-extrabold text-white tracking-tight block truncate">SIPASUT ADMIN</span>
                 <p class="text-[11px] text-slate-400">BMKG Maritim Perak</p>
             </div>
+            <!-- Close button (mobile only) -->
+            <button onclick="closeSidebar()" class="ml-auto md:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
         </div>
 
         <!-- Navigation Menu -->
-        <div class="flex-1 px-4 py-6 space-y-1 text-sm font-medium">
+        <div class="flex-1 px-4 py-5 space-y-1 text-sm font-medium overflow-y-auto">
             <div class="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
-            <!-- 0. Dashboard -->
-            <a href="{{ route('admin.dashboard') }}" 
+            <a href="{{ route('admin.dashboard') }}" onclick="closeSidebar()"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.dashboard') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span>Dashboard</span>
             </a>
 
-            <!-- 1. Kelola Data -->
-            <a href="{{ route('admin.data') }}" 
+            <a href="{{ route('admin.data') }}" onclick="closeSidebar()"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.data*') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6"/></svg>
                 <span>Kelola Data</span>
             </a>
 
-            <!-- 2. Kelola Lokasi -->
-            <a href="{{ route('admin.lokasi') }}" 
+            <a href="{{ route('admin.lokasi') }}" onclick="closeSidebar()"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.lokasi*') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span>Kelola Lokasi</span>
             </a>
 
-            <!-- 3. Kelola Notif -->
-            <a href="{{ route('admin.notif') }}" 
+            <a href="{{ route('admin.notif') }}" onclick="closeSidebar()"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.notif*') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                 <span>Kelola Notif</span>
             </a>
 
-            <!-- 4. Kelola Profil -->
-            <a href="{{ route('admin.profil') }}" 
+            <a href="{{ route('admin.profil') }}" onclick="closeSidebar()"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.profil*') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 <span>Kelola Profil</span>
             </a>
 
-            <!-- 5. Login Aktivitas -->
-            <a href="{{ route('admin.aktivitas') }}" 
+            <a href="{{ route('admin.aktivitas') }}" onclick="closeSidebar()"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.aktivitas*') ? 'bg-sky-600 text-white font-semibold shadow-md shadow-sky-600/30' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Login Aktivitas</span>
             </a>
 
-            <div class="pt-6 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Navigasi Luar</div>
+            <div class="pt-5 px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Navigasi Luar</div>
             <a href="{{ route('dashboard.index') }}" target="_blank"
                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -89,18 +90,18 @@
 
         <!-- Admin Profile footer in sidebar -->
         <div class="p-4 border-t border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-sky-400 border border-slate-600">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-sky-400 border border-slate-600 shrink-0">
                     {{ substr(Auth::user()->name ?? 'Admin', 0, 1) }}
                 </div>
-                <div class="overflow-hidden">
+                <div class="overflow-hidden min-w-0">
                     <p class="text-xs font-semibold text-white truncate">{{ Auth::user()->name ?? 'Admin' }}</p>
                     <p class="text-[10px] text-slate-400 truncate">{{ Auth::user()->email ?? '' }}</p>
                 </div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" title="Logout" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition">
+                <button type="submit" title="Logout" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 </button>
             </form>
@@ -108,18 +109,19 @@
     </aside>
 
     <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
         <!-- Top Mobile Header -->
-        <div class="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
-            <span class="font-bold">SIPASUT ADMIN</span>
-            <div class="flex gap-2 text-xs">
-                <a href="{{ route('admin.dashboard') }}" class="p-1 text-slate-300">Dashboard</a>
-                <a href="{{ route('admin.data') }}" class="p-1 text-slate-300">Data</a>
-                <a href="{{ route('admin.lokasi') }}" class="p-1 text-slate-300">Lokasi</a>
-                <a href="{{ route('admin.notif') }}" class="p-1 text-slate-300">Notif</a>
-                <a href="{{ route('admin.profil') }}" class="p-1 text-slate-300">Profil</a>
-                <a href="{{ route('admin.aktivitas') }}" class="p-1 text-slate-300">Log</a>
-            </div>
+        <div class="md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30">
+            <button onclick="openSidebar()" class="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <span class="font-bold text-sm">SIPASUT ADMIN</span>
+            <form method="POST" action="{{ route('logout') }}" class="inline">
+                @csrf
+                <button type="submit" class="p-2 text-slate-400 hover:text-rose-400 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </button>
+            </form>
         </div>
 
         <!-- Alert Notification Messages -->
@@ -147,10 +149,23 @@
             @endif
         </div>
 
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-4 md:p-6">
             @yield('content')
         </main>
     </div>
+
+    <script>
+        function openSidebar() {
+            document.getElementById('adminSidebar').classList.remove('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            document.getElementById('adminSidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    </script>
 
     @stack('scripts')
 </body>

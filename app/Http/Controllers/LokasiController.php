@@ -31,15 +31,12 @@ class LokasiController extends Controller
                 ->orderBy('record_date', 'desc')
                 ->first();
 
-            // Status pasang surut: normal / tinggi / rendah
+            // Status kondisi air: normal / waspada
             if ($latestPrediction) {
                 $statusDb = strtolower($latestPrediction->status);
-                if ($statusDb === 'bahaya') {
-                    $status = 'tinggi';
-                    $statusLabel = 'Tinggi';
-                } elseif ($statusDb === 'waspada') {
-                    $status = 'tinggi';
-                    $statusLabel = 'Tinggi';
+                if ($statusDb === 'bahaya' || $statusDb === 'waspada') {
+                    $status = 'waspada';
+                    $statusLabel = 'Waspada';
                 } else {
                     $status = 'normal';
                     $statusLabel = 'Normal';
@@ -83,8 +80,8 @@ class LokasiController extends Controller
                 'sensor_update' => $fallback[$slug]['sensor_update'] ?? $sensorUpdate,
                 'image'         => $image,
                 'areas'         => $fallback[$slug]['areas'] ?? [
-               ['name' => $loc->name, 'lat' => (float) $loc->latitude, 'lng' => (float) $loc->longitude],
-],
+                    ['name' => $loc->name, 'lat' => (float) $loc->latitude, 'lng' => (float) $loc->longitude],
+                ],
             ];
         }
 
@@ -157,8 +154,8 @@ class LokasiController extends Controller
                 'slug'          => 'surabaya-barat',
                 'name'          => 'Surabaya Barat',
                 'kabupaten'     => 'Surabaya, Jawa Timur',
-                'status'        => 'tinggi',
-                'status_label'  => 'Tinggi',
+                'status'        => 'waspada',
+                'status_label'  => 'Waspada',
                 'lat'           => -7.2429,
                 'lng'           => 112.6913,
                 'id_lokasi'     => 'LOC-TPK-004',

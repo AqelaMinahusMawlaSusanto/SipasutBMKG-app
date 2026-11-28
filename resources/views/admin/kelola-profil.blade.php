@@ -1,6 +1,22 @@
 <x-app-layout>
+@push('styles')
+<style>
+.kp-page-pad { padding: 28px 24px; }
+.kp-grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 900px) {
+    .kp-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+    .kp-page-pad { padding: 16px 14px; }
+    .kp-page-pad h1 { font-size: 20px !important; }
+    .kp-card { padding: 18px 16px !important; }
+    .kp-info-row { flex-wrap: wrap; gap: 4px; }
+    .kp-info-row > div:last-child { word-break: break-all; }
+}
+</style>
+@endpush
     <div class="bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;">
-    <div class="max-w-7xl mx-auto px-6 py-8 space-y-6" style="padding-top: 32px;">
+    <div class="max-w-7xl mx-auto space-y-6 kp-page-pad">
 
         <!-- Title Section -->
         <div>
@@ -24,10 +40,10 @@
         @endif
 
         <!-- Layout Grid 2 Kolom -->
-        <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start;">
+        <div class="kp-grid">
 
             <!-- ================= KARTU KIRI: INFORMASI PROFIL ================= -->
-            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 24px;">
+            <div class="kp-card" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 24px;">
                 
                 <h2 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Informasi Profil</h2>
 
@@ -46,7 +62,7 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 16px; border-top: 1px solid #F1F5F9; padding-top: 20px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                    <div class="kp-info-row" style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
                         <div style="display: flex; align-items: center; gap: 10px; color: #64748B; font-weight: 500;">
                             <span>👤</span> <span>Username</span>
                         </div>
@@ -55,7 +71,7 @@
 
                     <div style="border-bottom: 1px solid #F8FAFC;"></div>
 
-                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                    <div class="kp-info-row" style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
                         <div style="display: flex; align-items: center; gap: 10px; color: #64748B; font-weight: 500;">
                             <span>✉️</span> <span>Email</span>
                         </div>
@@ -64,7 +80,7 @@
 
                     <div style="border-bottom: 1px solid #F8FAFC;"></div>
 
-                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                    <div class="kp-info-row" style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
                         <div style="display: flex; align-items: center; gap: 10px; color: #64748B; font-weight: 500;">
                             <span>💻</span> <span>IP Address</span>
                         </div>
@@ -82,7 +98,7 @@
             </div>
 
             <!-- ================= KARTU KANAN: EDIT PROFIL & UBAH PASSWORD ================= -->
-            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);">
+            <div class="kp-card" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);">
                 
                 <form action="{{ route('profile.update') }}" method="POST" style="display: flex; flex-direction: column; gap: 24px;">
                     @csrf

@@ -13,7 +13,45 @@
     $uploads = $uploads ?? collect([]);
 @endphp
 <x-app-layout>
-<div style="background-color:#F8FAFC;min-height:100vh;padding:32px 40px;font-family:'Poppins',sans-serif;">
+@push('styles')
+<style>
+/* ---- Responsif Kelola Data ---- */
+.kd-wrap { background-color:#F8FAFC; min-height:100vh; padding:28px 32px; font-family:'Poppins',sans-serif; }
+.kd-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+.kd-header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.kd-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:24px; }
+.kd-stat-grid > div { min-width:0; }
+.modal-form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+.modal-overlay-kd { padding: 12px; }
+.modal-box-kd { width:100%; max-width:540px; }
+
+@media (max-width: 1024px) {
+    .kd-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+    .kd-wrap { padding:16px 14px; }
+    .kd-header { flex-direction:column; gap:12px; margin-bottom:18px; }
+    .kd-header h1 { font-size:18px !important; }
+    .kd-header-actions { width:100%; flex-direction:column; gap:8px; }
+    .kd-header-actions button { width:100% !important; justify-content:center !important; font-size:12.5px !important; padding:10px 14px !important; }
+    .kd-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .kd-stat-grid > div { padding:14px 12px !important; gap:10px !important; }
+    .kd-stat-grid svg { width:18px !important; height:18px !important; }
+    .kd-stat-grid [style*="font-size:30px"],
+    .kd-stat-grid [style*="font-size:28px"],
+    .kd-stat-grid [style*="font-size:22px"] { font-size:18px !important; }
+    .kd-stat-grid [style*="width:52px"] { width:38px !important; height:38px !important; }
+    .modal-box-kd { max-width:100% !important; border-radius:14px !important; }
+    .modal-form-grid-2 { grid-template-columns:1fr !important; gap:12px !important; }
+    .modal-footer-kd { flex-direction:column; }
+    .modal-footer-kd button, .modal-footer-kd a { width:100%; text-align:center; justify-content:center; }
+}
+@media (max-width: 380px) {
+    .kd-stat-grid { grid-template-columns:1fr; }
+}
+</style>
+@endpush
+<div class="kd-wrap">
 
     {{-- ===== FLASH ALERTS ===== --}}
     @if(session('success'))
@@ -35,12 +73,12 @@
     @endif
 
     {{-- ===== PAGE HEADER ===== --}}
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;">
+    <div class="kd-header">
         <div>
             <h1 style="font-size:26px;font-weight:800;color:#0F172A;margin:0 0 4px;">Kelola Prediksi Pasang Surut</h1>
             <p style="font-size:13px;color:#64748B;margin:0;font-weight:500;">Kelola data prediksi pasang surut di seluruh lokasi monitoring</p>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="kd-header-actions">
             @if($totalData > 0)
                 <button type="button" onclick="openModal('modalHapusSemua')"
                     style="background:#FEF2F2;border:1.5px solid #FECACA;color:#DC2626;font-weight:700;font-size:13.5px;padding:12px 18px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(220,38,38,0.1);white-space:nowrap;">
@@ -59,7 +97,7 @@
     </div>
 
     {{-- ===== 4 STAT CARDS ===== --}}
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+    <div class="kd-stat-grid">
 
         {{-- Card 1: Total Data --}}
         <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
@@ -371,7 +409,7 @@
      MODAL: IMPORT BERKAS (EXCEL / CSV / PDF)
      ================================================================ --}}
 <div id="modalUpload"
-    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:20px;width:100%;max-width:540px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
 
         {{-- Header --}}
@@ -399,7 +437,7 @@
                 </select>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="modal-form-grid-2">
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Bulan Periode <span style="color:#ef4444;">*</span></label>
                     <select name="period_month" required
@@ -451,7 +489,7 @@
      MODAL: TAMBAH PREDIKSI (MANUAL)
      ================================================================ --}}
 <div id="modalTambah"
-    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:20px;width:100%;max-width:560px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
 
         {{-- Header --}}
@@ -485,7 +523,7 @@
                     style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="modal-form-grid-2">
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Pasang Tertinggi <span style="color:#ef4444;">*</span></label>
                     <input type="text" name="high_tide_time" required placeholder="Contoh: 01.00 WIB"
@@ -498,7 +536,7 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="modal-form-grid-2">
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Surut Terendah <span style="color:#ef4444;">*</span></label>
                     <input type="text" name="low_tide_time" required placeholder="Contoh: 12.00 WIB"
@@ -539,7 +577,7 @@
      MODAL: EDIT PREDIKSI
      ================================================================ --}}
 <div id="modalEdit"
-    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:20px;width:100%;max-width:560px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
 
         <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#FFFBEB;">
@@ -572,7 +610,7 @@
                     style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;box-sizing:border-box;">
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="modal-form-grid-2">
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Pasang Tertinggi</label>
                     <input type="text" name="high_tide_time" id="editHighTime" required
@@ -585,7 +623,7 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+            <div class="modal-form-grid-2">
                 <div>
                     <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Jam Surut Terendah</label>
                     <input type="text" name="low_tide_time" id="editLowTime" required
@@ -626,7 +664,7 @@
      MODAL: DETAIL PREDIKSI
      ================================================================ --}}
 <div id="modalDetail"
-    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
     <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;box-shadow:0 25px 60px rgba(0,0,0,0.2);overflow:hidden;">
 
         <div style="padding:20px 24px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;background:#EFF6FF;">

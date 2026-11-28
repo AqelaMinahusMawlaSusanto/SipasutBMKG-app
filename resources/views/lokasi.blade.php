@@ -57,16 +57,12 @@
                 <p class="legend-box__title">Kondisi Air</p>
                 <ul>
                     <li>
-                        <span class="dot dot--tinggi"></span>
-                        <span><strong>Tinggi</strong><small>Tinggi air diatas normal</small></span>
-                    </li>
-                    <li>
                         <span class="dot dot--normal"></span>
                         <span><strong>Normal</strong><small>Tinggi air dalam kondisi normal</small></span>
                     </li>
                     <li>
-                        <span class="dot dot--rendah"></span>
-                        <span><strong>Rendah</strong><small>Tinggi air dibawah normal</small></span>
+                        <span class="dot dot--waspada"></span>
+                        <span><strong>Waspada</strong><small>Tinggi air di atas atau di bawah normal, perlu diwaspadai</small></span>
                     </li>
                 </ul>
             </div>
