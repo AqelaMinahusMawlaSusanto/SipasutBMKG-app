@@ -1,6 +1,28 @@
 <x-app-layout>
+@push('styles')
+<style>
+.la-page-pad { padding: 28px 24px; }
+.la-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.la-stat-grid > div { min-width: 0; }
+@media (max-width: 1024px) {
+    .la-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    .la-page-pad { padding: 16px 14px; }
+    .la-page-pad h1 { font-size: 20px !important; }
+    .la-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .la-stat-grid > div { padding: 14px 12px !important; gap: 10px !important; }
+    .la-stat-grid [style*="font-size: 28px"] { font-size: 20px !important; }
+    .la-stat-grid [style*="width: 52px"] { width: 38px !important; height: 38px !important; }
+    .la-stat-grid svg { width: 18px !important; height: 18px !important; }
+}
+@media (max-width: 380px) {
+    .la-stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+@endpush
     <div class="bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;">
-        <div class="max-w-7xl mx-auto px-6 py-8 space-y-6" style="padding-top: 32px;">
+        <div class="max-w-7xl mx-auto space-y-6 la-page-pad">
 
             <!-- Title Section -->
             <div style="margin-bottom: 24px;">
@@ -16,7 +38,7 @@
             @endif
 
             <!-- 4 Stat Cards Mendatar Kesamping (4 Kolom 1 Baris Sejajar) -->
-            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="la-stat-grid">
                 
                 <!-- Card 1: Total Aktivitas -->
                 <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">

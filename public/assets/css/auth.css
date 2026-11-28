@@ -134,7 +134,26 @@
 .alert-success { background: #dcfce7; color: #15803d; }
 
 @media (max-width: 860px) {
-    .stage-grid { grid-template-columns: 1fr; }
-    .headline { text-align: center; margin-bottom: 24px; }
+    .stage { padding: 24px 16px; }
+    .stage-grid { grid-template-columns: 1fr; gap: 24px; }
+    .headline { text-align: center; margin-bottom: 8px; }
     .headline p { margin: 0 auto; }
+    .headline h1 { font-size: 26px; }
+    .brand-mark { margin-bottom: 24px; }
+}
+
+@media (max-width: 480px) {
+    .stage { padding: 16px 14px 32px; }
+    .stage-grid { gap: 16px; }
+    .headline { display: none; } /* hide hero text on small phones, focus on form */
+    .auth-card { padding: 24px 20px; border-radius: 14px; }
+    .auth-card h2 { font-size: 17px; }
+    .auth-card .card-sub { font-size: 11px; margin-bottom: 18px; }
+    .auth-card .card-logo { width: 40px; height: 40px; }
+    .control input { font-size: 16px; min-height: 44px; }
+    .btn { min-height: 44px; font-size: 15px; }
+    .remember { margin-bottom: 16px; }
+    .card-foot { font-size: 12px; }
+    .brand-mark .brand-name { font-size: 15px; }
+    .brand-mark img { width: 34px; height: 34px; }
 }

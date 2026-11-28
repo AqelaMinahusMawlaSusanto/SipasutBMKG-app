@@ -1,9 +1,26 @@
 <x-app-layout>
+@push('styles')
+<style>
+.kl-page-pad { padding: 28px 24px; }
+.kl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.kl-modal-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+.kl-table-wrap { border: 1px solid #E2E8F0; border-radius: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.kl-table-wrap table { min-width: 640px; }
+@media (max-width: 640px) {
+    .kl-page-pad { padding: 16px 14px; }
+    .kl-header { flex-direction: column; align-items: stretch; }
+    .kl-header h1 { font-size: 20px !important; }
+    .kl-header button { width: 100%; justify-content: center; }
+    .kl-card-pad { padding: 14px !important; }
+    .kl-modal-grid-2 { grid-template-columns: 1fr !important; }
+}
+</style>
+@endpush
     <div class="bg-[#F8FAFC] min-h-screen font-sans" style="background-color: #F8FAFC;">
-        <div class="max-w-7xl mx-auto px-6 py-8 space-y-6" style="padding-top: 32px;">
+        <div class="max-w-7xl mx-auto space-y-6 kl-page-pad">
             
             <!-- Header Section & Tombol Tambah Lokasi -->
-            <div class="flex items-center justify-between" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <div class="kl-header">
                 <div>
                     <h1 class="text-3xl font-bold text-[#0F172A] tracking-tight" style="color: #0F172A; font-weight: 700; font-size: 26px; margin: 0 0 4px;">Kelola Lokasi Monitoring</h1>
                     <p class="text-sm font-medium text-slate-500 mt-1" style="color: #64748B; font-size: 13px; margin: 0;">Kelola data lokasi stasiun monitoring pasang surut.</p>
@@ -39,7 +56,7 @@
             @endif
 
             <!-- Container Utama Card Putih -->
-            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);" class="space-y-6">
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);" class="space-y-6 kl-card-pad">
 
                 <!-- Input Cari Lokasi Stasiun (Sejajar dengan Figma) -->
                 <form action="{{ route('admin.lokasi') }}" method="GET" style="margin-bottom: 20px;">
@@ -53,7 +70,7 @@
                 </form>
 
                 <!-- Tabel Lokasi Monitoring -->
-                <div style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+                <div class="kl-table-wrap">
                     <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 14px;">
                         <!-- Header Tabel Biru Muda Figma BMKG -->
                         <thead style="background-color: #D7E5F9; color: #0F172A; font-weight: 700; font-size: 13px;">
@@ -184,7 +201,7 @@
                         <input type="text" name="code" required placeholder="Contoh: SBYBRT"
                             style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;text-transform:uppercase;box-sizing:border-box;">
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div class="kl-modal-grid-2">
                         <div>
                             <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Latitude <span style="color:#ef4444;">*</span></label>
                             <input type="number" step="0.0000001" name="latitude" required placeholder="-7.1950"
@@ -235,7 +252,7 @@
                         <input type="text" name="code" id="editCode" required
                             style="width:100%;border:1px solid #CBD5E1;border-radius:10px;padding:11px 14px;font-size:13px;color:#334155;outline:none;text-transform:uppercase;box-sizing:border-box;">
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div class="kl-modal-grid-2">
                         <div>
                             <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Latitude <span style="color:#ef4444;">*</span></label>
                             <input type="number" step="0.0000001" name="latitude" id="editLat" required
